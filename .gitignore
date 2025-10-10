@@ -1,0 +1,29 @@
+# Compiled Go binaries
+# The binary name is often the name of the directory or module.
+log-beacon
+
+# Generic binaries for different operating systems
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Dependency directory for vendored modules
+vendor/
+
+# Environment variables file
+.env
+
+# IDE-specific configuration folders
+.idea/
+.vscode/
+
+# macOS specific files
+.DS_Store

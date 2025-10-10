@@ -16,42 +16,48 @@ Log Beacon is a high-performance, Humio-inspired log ingestion and search platfo
 
 ### Running the Server
 
-1.  **Clone the repository:**
+1. **Clone the repository:**
+
     ```bash
     git clone https://github.com/your-username/log-beacon.git
     cd log-beacon
     ```
 
-2.  **Install dependencies:**
+2. **Install dependencies:**
     The project uses Go Modules. Dependencies will be automatically downloaded when you run the application.
 
-3.  **Run the server:**
+3. **Run the server:**
+
     ```bash
     go run main.go
     ```
+
     The server will start on `http://localhost:8080`.
 
 ### API Endpoints
 
 The following endpoints are available:
 
--   `GET /health`: Checks the health of the server.
--   `POST /api/v1/ingest`: The endpoint for ingesting logs.
--   `GET /api/v1/search`: The endpoint for searching logs.
+- `GET /health`: Checks the health of the server.
+- `POST /api/v1/ingest`: The endpoint for ingesting logs.
+- `GET /api/v1/search`: The endpoint for searching logs.
 
-#### Example Usage with cURL:
+#### Example Usage with cURL
 
--   **Health Check:**
+- **Health Check:**
+
     ```bash
     curl http://localhost:8080/health
     ```
 
--   **Search:**
+- **Search:**
+
     ```bash
     curl "http://localhost:8080/api/v1/search?q=error"
     ```
 
--   **Ingest:**
+- **Ingest:**
+
     ```bash
     curl -X POST http://localhost:8080/api/v1/ingest \
          -H "Content-Type: application/json" \
