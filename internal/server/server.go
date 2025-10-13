@@ -1,7 +1,10 @@
 package server
 
 import (
+	"log"
 	"net/http"
+
+	"log-beacon/internal/model"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,9 +35,21 @@ func NewRouter() *gin.Engine {
 
 // handleIngest is the handler for the log ingestion endpoint.
 func handleIngest(c *gin.Context) {
+	var logEntry model.Log
+
+	// Bind the incoming JSON payload to the Log struct.
+	if err := c.ShouldBindJSON(&logEntry); err != nil {
+		// If the request is malformed, return a 400 Bad Request error.
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// For now, we'll just print the received log to the console.
+	// This confirms that parsing is working correctly.
+	log.Printf("Received log: %+v\n", logEntry)
+
 	c.JSON(http.StatusOK, gin.H{
-		"status":  "received",
-		"message": "Log ingestion endpoint is working.",
+		"status": "received",
 	})
 }
 

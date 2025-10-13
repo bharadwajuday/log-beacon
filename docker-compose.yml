@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  # NATS Server with JetStream enabled
+  nats:
+    image: nats:latest
+    ports:
+      - "4222:4222"  # Client port
+      - "6222:6222"  # Routing port
+      - "8222:8222"  # HTTP monitoring port
+    # Command to start NATS with JetStream enabled
+    command: "-js"
+
+  # API Handler Service (Our Go Application)
+  api:
+    # Build the image from the Dockerfile in the current directory
+    build: .
+    ports:
+      - "8080:8080"
+    # Ensure that the 'nats' service is started before this service
+    depends_on:
+      - nats
+    # Pass the NATS server address to our application via an environment variable
+    environment:
+      - NATS_URL=nats://nats:4222

@@ -12,27 +12,30 @@ Log Beacon is a high-performance, Humio-inspired log ingestion and search platfo
 
 ### Prerequisites
 
-- [Go](https://golang.org/doc/install) (version 1.18 or higher recommended)
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
 
-### Running the Server
+### Running the Environment
 
-1. **Clone the repository:**
+The application is designed to run in a containerized environment managed by Docker Compose. This setup includes the main API service and a NATS message queue.
 
+1.  **Clone the repository:**
     ```bash
     git clone https://github.com/your-username/log-beacon.git
     cd log-beacon
     ```
 
-2. **Install dependencies:**
-    The project uses Go Modules. Dependencies will be automatically downloaded when you run the application.
-
-3. **Run the server:**
-
+2.  **Build and Run:**
+    Use Docker Compose to build the images and start the services.
     ```bash
-    go run main.go
+    docker-compose up --build
     ```
+    The API server will be available at `http://localhost:8080`.
 
-    The server will start on `http://localhost:8080`.
+3.  **Stopping the services:**
+    To stop and remove the containers, run:
+    ```bash
+    docker-compose down
+    ```
 
 ### API Endpoints
 

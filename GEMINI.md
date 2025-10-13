@@ -14,15 +14,17 @@ Log Beacon is a log management system inspired by Humio. The primary goal is to 
 
 ## High-Level Architecture
 
--   **Ingestion API:** A RESTful endpoint (`/api/v1/ingest`) to receive log data.
--   **Search API:** A RESTful endpoint (`/api/v1/search`) to query logs.
--   **Storage:**
-    -   **Index (Metadata):** An embedded key-value store like BadgerDB or BoltDB is planned.
-    -   **Log Data (Chunks):** A local filesystem or an object store (like MinIO) is planned.
--   **Design Philosophy:** The system separates log metadata (labels/tags) from the raw log message. The index is used for fast filtering, and then a full-text search is performed on a smaller subset of log data chunks.
+-   **API Handler:** A Go service using Gin that exposes the `/api/v1/ingest` endpoint. Its sole responsibility is to receive log data, validate it, and publish it to a NATS message queue.
+-   **Message Queue:** A NATS server (with JetStream enabled) acts as a durable buffer between the API handler and downstream processing services.
+-   **Consumer (Planned):** A separate Go service that will consume logs from the NATS queue, process them, and write them to a persistent storage layer.
+-   **Storage (Planned):**
+    -   **Index (Metadata):** An embedded key-value store like BadgerDB or BoltDB.
+    -   **Log Data (Chunks):** A local filesystem or an object store (like MinIO).
 
 ## Current Status
 
--   A basic Gin server has been set up in `main.go`.
--   Placeholder handlers for the ingest and search endpoints have been created.
--   The project has been initialized as a Go module.
+-   The project is managed via `docker-compose`.
+-   A `nats` service is defined in the `docker-compose.yml` file.
+-   An `api` service (the Go Gin server) is defined and containerized.
+-   The Go application is structured into `main`, `internal/server`, and `internal/model` packages.
+-   The `handleIngest` endpoint currently parses the incoming log but does not yet publish it to NATS.
