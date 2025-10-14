@@ -23,8 +23,9 @@ Log Beacon is a log management system inspired by Humio. The primary goal is to 
 
 ## Current Status
 
--   The project is managed via `docker-compose`.
--   A `nats` service is defined in the `docker-compose.yml` file.
--   An `api` service (the Go Gin server) is defined and containerized.
--   The Go application is structured into `main`, `internal/server`, and `internal/model` packages.
--   The `handleIngest` endpoint currently parses the incoming log but does not yet publish it to NATS.
+-   The project is managed via `docker-compose` with pinned image versions (`nats:2.10.14-alpine`, `alpine:3.19`).
+-   The `nats` service is configured with a persistent, host-bound volume for JetStream storage located at `/tmp/log-beacon/nats-data`.
+-   The `api` service is defined and containerized.
+-   On startup, the `api` service programmatically ensures a durable NATS stream named `LOGS` (for the `log.events` subject) exists.
+-   The Go application is structured into `main`, `internal/server`, `internal/model`, and `internal/queue` packages.
+-   The `handleIngest` endpoint currently parses incoming logs but does not yet publish them to NATS.
