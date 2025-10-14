@@ -27,7 +27,7 @@ func EnsureStream(natsURL string) {
 	streamConfig := &nats.StreamConfig{
 		Name:      "LOGS",
 		Subjects:  []string{"log.events"},
-		Storage:   nats.FileStorage, // Ensure persistence on disk
+		Storage:   nats.FileStorage,     // Ensure persistence on disk
 		Retention: nats.WorkQueuePolicy, // Messages are deleted once acknowledged by a consumer
 	}
 
@@ -38,21 +38,21 @@ func EnsureStream(natsURL string) {
 		// We can check for nats.ErrStreamNotFound, but for simplicity,
 		// we'll just try to create it.
 		log.Println("Stream 'LOGS' not found, creating it...")
-	} 
+	}
 
-    // If the stream is nil, it means it was not found and needs to be created
-    if stream == nil {
-	    _, err = js.AddStream(streamConfig)
-	    if err != nil {
-		    log.Fatalf("Failed to add stream: %v", err)
-	    }
-	    log.Println("Stream 'LOGS' created.")
-    } else {
-        // If the stream exists, we update it to ensure the configuration is up to date.
-	    _, err = js.UpdateStream(streamConfig)
-	    if err != nil {
-		    log.Fatalf("Failed to update stream: %v", err)
-	    }
-        log.Println("Stream 'LOGS' already exists, configuration updated.")
-    }
+	// If the stream is nil, it means it was not found and needs to be created
+	if stream == nil {
+		_, err = js.AddStream(streamConfig)
+		if err != nil {
+			log.Fatalf("Failed to add stream: %v", err)
+		}
+		log.Println("Stream 'LOGS' created.")
+	} else {
+		// If the stream exists, we update it to ensure the configuration is up to date.
+		_, err = js.UpdateStream(streamConfig)
+		if err != nil {
+			log.Fatalf("Failed to update stream: %v", err)
+		}
+		log.Println("Stream 'LOGS' already exists, configuration updated.")
+	}
 }

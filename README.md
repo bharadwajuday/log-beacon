@@ -18,21 +18,25 @@ Log Beacon is a high-performance, Humio-inspired log ingestion and search platfo
 
 The application is designed to run in a containerized environment managed by Docker Compose. This setup includes the main API service and a NATS message queue.
 
-1.  **Clone the repository:**
+1. **Clone the repository:**
+
     ```bash
     git clone https://github.com/your-username/log-beacon.git
     cd log-beacon
     ```
 
-2.  **Build and Run:**
+2. **Build and Run:**
     Use Docker Compose to build the images and start the services.
+
     ```bash
     docker-compose up --build
     ```
+
     The API server will be available at `http://localhost:8080`.
 
-3.  **Stopping the services:**
+3. **Stopping the services:**
     To stop and remove the containers, run:
+
     ```bash
     docker-compose down
     ```
