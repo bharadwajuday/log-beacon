@@ -23,7 +23,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/server .
 # --- Stage 2: Final Image ---
 # Use a minimal, non-root base image for the final container.
 # Alpine is a good choice for its small size.
-FROM alpine:latest
+FROM alpine:3.19
 
 # Copy the compiled binary from the builder stage.
 COPY --from=builder /bin/server /bin/server
