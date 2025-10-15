@@ -5,19 +5,25 @@ import (
 	"net/http"
 
 	"log-beacon/internal/model"
-	"log-beacon/internal/queue"
 
 	"github.com/gin-gonic/gin"
 )
 
+// LogPublisher defines the interface for publishing log entries.
+// This allows for mocking in tests.
+type LogPublisher interface {
+	Publish(logEntry model.Log) error
+	Close()
+}
+
 // Server holds dependencies for the HTTP server.
 type Server struct {
 	router    *gin.Engine
-	publisher *queue.Publisher
+	publisher LogPublisher
 }
 
 // New creates a new HTTP server and sets up routing.
-func New(pub *queue.Publisher) *Server {
+func New(pub LogPublisher) *Server {
 	router := gin.Default()
 	s := &Server{
 		router:    router,
