@@ -18,12 +18,19 @@ func main() {
 	// Ensure the NATS stream exists and is configured correctly.
 	queue.EnsureStream(natsURL)
 
-	// Create a new router from our server package.
-	router := server.NewRouter()
+	// Create a new NATS publisher.
+	publisher, err := queue.NewPublisher(natsURL)
+	if err != nil {
+		log.Fatalf("Failed to create NATS publisher: %v", err)
+	}
+	defer publisher.Close()
+
+	// Create a new server with the publisher dependency.
+	srv := server.New(publisher)
 
 	// Start the server on port 8080.
 	log.Println("Starting API server on port 8080...")
-	if err := router.Run(":8080"); err != nil {
+	if err := srv.Start(":8080"); err != nil {
 		panic(err)
 	}
 }

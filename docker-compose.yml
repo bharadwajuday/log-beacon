@@ -17,8 +17,18 @@ services:
   # API Handler Service (Our Go Application)
   api:
     build: .
+    command: ["/bin/api"]
     ports:
       - "8080:8080"
+    depends_on:
+      - nats
+    environment:
+      - NATS_URL=nats://nats:4222
+
+  # Consumer Service
+  consumer:
+    build: .
+    command: ["/bin/consumer"]
     depends_on:
       - nats
     environment:

@@ -5,56 +5,64 @@ import (
 	"net/http"
 
 	"log-beacon/internal/model"
+	"log-beacon/internal/queue"
 
 	"github.com/gin-gonic/gin"
 )
 
-// NewRouter creates and configures a Gin router.
-func NewRouter() *gin.Engine {
-	// Initialize Gin router with default middleware (logger and recovery).
+// Server holds dependencies for the HTTP server.
+type Server struct {
+	router    *gin.Engine
+	publisher *queue.Publisher
+}
+
+// New creates a new HTTP server and sets up routing.
+func New(pub *queue.Publisher) *Server {
 	router := gin.Default()
-
-	// --- API Route Group ---
-	// Grouping routes under /api/v1
-	api := router.Group("/api/v1")
-	{
-		// 1. Log Ingestion Endpoint
-		api.POST("/ingest", handleIngest)
-
-		// 2. Log Search Endpoint
-		api.GET("/search", handleSearch)
+	s := &Server{
+		router:    router,
+		publisher: pub,
 	}
 
-	// Health check endpoint
+	// --- API Route Group ---
+	api := router.Group("/api/v1")
+	{
+		api.POST("/ingest", s.handleIngest)
+		api.GET("/search", s.handleSearch)
+	}
+
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	return router
+	return s
 }
 
-// handleIngest is the handler for the log ingestion endpoint.
-func handleIngest(c *gin.Context) {
+// Start runs the HTTP server on a given address.
+func (s *Server) Start(addr string) error {
+	return s.router.Run(addr)
+}
+
+// handleIngest processes incoming log entries and publishes them to NATS.
+func (s *Server) handleIngest(c *gin.Context) {
 	var logEntry model.Log
 
-	// Bind the incoming JSON payload to the Log struct.
 	if err := c.ShouldBindJSON(&logEntry); err != nil {
-		// If the request is malformed, return a 400 Bad Request error.
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// For now, we'll just print the received log to the console.
-	// This confirms that parsing is working correctly.
-	log.Printf("Received log: %+v\n", logEntry)
+	if err := s.publisher.Publish(logEntry); err != nil {
+		log.Printf("Error publishing log to NATS: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process log"})
+		return
+	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"status": "received",
-	})
+	c.JSON(http.StatusAccepted, gin.H{"status": "accepted"})
 }
 
-// handleSearch is the handler for the log search endpoint.
-func handleSearch(c *gin.Context) {
+// handleSearch is a placeholder for the log search endpoint.
+func (s *Server) handleSearch(c *gin.Context) {
 	query := c.DefaultQuery("q", "no_query_provided")
 
 	c.JSON(http.StatusOK, gin.H{
