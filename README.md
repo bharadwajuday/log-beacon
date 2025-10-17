@@ -8,6 +8,19 @@ Log Beacon is a high-performance, Humio-inspired log ingestion and search platfo
 - **Simple & Scalable:** Designed with a clean architecture that separates log data from its metadata, allowing for cost-effective scaling.
 - **Developer-Friendly:** Provides a straightforward API for log ingestion and a powerful query interface.
 
+## Project Structure
+
+The project is organized into several key packages:
+
+- `cmd/`: Contains the `main` packages for the different binaries (`api` and `consumer`).
+- `internal/`: Contains the core business logic for the application.
+  - `server/`: The Gin web server and API handlers.
+  - `consumer/`: The NATS message consumer and log processor.
+  - `queue/`: NATS connection and stream management logic.
+  - `model/`: Core data structures like the `Log` entry.
+- `docker-compose.yml`: Defines the services, networks, and volumes for the local development environment.
+- `Dockerfile`: A multi-stage Dockerfile for building lean, production-ready images of the Go applications.
+
 ## Getting Started
 
 ### Prerequisites

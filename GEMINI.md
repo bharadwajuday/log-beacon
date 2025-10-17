@@ -10,22 +10,25 @@ Log Beacon is a log management system inspired by Humio. The primary goal is to 
 
 - **Language:** Go
 - **Web Framework:** Gin (`github.com/gin-gonic/gin`)
+- **Message Queue:** NATS (`github.com/nats-io/nats.go`)
 - **Backend Focus:** The current development focus is purely on the backend. No frontend work is planned at this stage.
 
 ## High-Level Architecture
 
-- **API Handler:** A Go service using Gin that exposes the `/api/v1/ingest` endpoint. Its sole responsibility is to receive log data, validate it, and publish it to a NATS message queue.
-- **Message Queue:** A NATS server (with JetStream enabled) acts as a durable buffer between the API handler and downstream processing services.
-- **Consumer (Planned):** A separate Go service that will consume logs from the NATS queue, process them, and write them to a persistent storage layer.
+- **API Handler (`api` service):** A Go service using Gin that exposes the `/api/v1/ingest` endpoint. It validates incoming logs and publishes them to a NATS subject.
+- **Message Queue (`nats` service):** A NATS server with JetStream enabled, acting as a durable buffer.
+- **Consumer (`consumer` service):** A separate Go service that subscribes to the NATS subject, consumes the logs, and will eventually be responsible for writing them to persistent storage.
 - **Storage (Planned):**
   - **Index (Metadata):** An embedded key-value store like BadgerDB or BoltDB.
   - **Log Data (Chunks):** A local filesystem or an object store (like MinIO).
 
 ## Current Status
 
-- The project is managed via `docker-compose` with pinned image versions (`nats:2.10.14-alpine`, `alpine:3.19`).
-- The `nats` service is configured with a persistent, host-bound volume for JetStream storage located at `/tmp/log-beacon/nats-data`.
-- The `api` service is defined and containerized.
-- On startup, the `api` service programmatically ensures a durable NATS stream named `LOGS` (for the `log.events` subject) exists.
-- The Go application is structured into `main`, `internal/server`, `internal/model`, and `internal/queue` packages.
-- The `handleIngest` endpoint currently parses incoming logs but does not yet publish them to NATS.
+- The project is managed via `docker-compose` with three services: `api`, `consumer`, and `nats`.
+- Base images are pinned to specific versions for reproducibility.
+- The `nats` service uses a persistent, host-bound volume for JetStream storage (`/tmp/log-beacon/nats-data`).
+- The `api` service programmatically ensures the `LOGS` stream exists on startup.
+- The Go application is structured into multiple binaries (`cmd/api`, `cmd/consumer`) and internal packages (`internal/server`, `internal/consumer`, `internal/model`, `internal/queue`).
+- The `api` service successfully publishes logs to the `log.events` NATS subject.
+- The `consumer` service subscribes to `log.events` and currently prints the consumed logs to the console, confirming the end-to-end pipeline is functional.
+- The consumer logic has been refactored into a modular `internal/consumer` package.
