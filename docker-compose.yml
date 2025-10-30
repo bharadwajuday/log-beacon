@@ -14,6 +14,20 @@ services:
       # Mount a volume to persist JetStream data
       - nats-data:/data/jetstream
 
+  # MinIO Object Storage
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    ports:
+      - "9000:9000" # API port
+      - "9001:9001" # Console port
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    # Command to start MinIO server and set console address
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+
   # API Handler Service (Our Go Application)
   api:
     build: .
@@ -31,10 +45,11 @@ services:
     command: ["/bin/consumer"]
     depends_on:
       - nats
+      - minio # Consumer needs MinIO to be available
     environment:
       - NATS_URL=nats://nats:4222
 
-# Define the named volume for NATS data
+# Define the named volumes
 volumes:
   nats-data:
     driver: local
@@ -42,3 +57,10 @@ volumes:
       type: 'none'
       o: 'bind'
       device: '/tmp/log-beacon/nats-data'
+
+  minio-data:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/tmp/log-beacon/minio-data'
