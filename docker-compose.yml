@@ -45,9 +45,12 @@ services:
     command: ["/bin/consumer"]
     depends_on:
       - nats
-      - minio # Consumer needs MinIO to be available
+      - minio
     environment:
       - NATS_URL=nats://nats:4222
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY_ID=minioadmin
+      - MINIO_SECRET_ACCESS_KEY=minioadmin
 
 # Define the named volumes
 volumes:
