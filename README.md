@@ -29,7 +29,7 @@ The project is organized into several key packages:
 
 ### Running the Environment
 
-The application is designed to run in a containerized environment managed by Docker Compose. This setup includes the main API service and a NATS message queue.
+The application is designed to run in a containerized environment managed by Docker Compose. This setup includes the `api` and `consumer` services, a `nats` message queue, and a `minio` object storage server.
 
 1. **Clone the repository:**
 
@@ -39,15 +39,17 @@ The application is designed to run in a containerized environment managed by Doc
     ```
 
 2. **Build and Run:**
-    Use Docker Compose to build the images and start the services.
+    Use Docker Compose to build the images and start all services.
 
     ```bash
     docker-compose up --build
     ```
 
-    The API server will be available at `http://localhost:8080`.
+3. **Accessing Services:**
+    - **API Server:** `http://localhost:8080`
+    - **MinIO Console:** `http://localhost:9001` (Login with `minioadmin`/`minioadmin`)
 
-3. **Stopping the services:**
+4. **Stopping the services:**
     To stop and remove the containers, run:
 
     ```bash
