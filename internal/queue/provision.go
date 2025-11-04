@@ -28,7 +28,7 @@ func EnsureStream(natsURL string) {
 		Name:      "LOGS",
 		Subjects:  []string{"log.events"},
 		Storage:   nats.FileStorage,     // Ensure persistence on disk
-		Retention: nats.WorkQueuePolicy, // Messages are deleted once acknowledged by a consumer
+		Retention: nats.InterestPolicy, // Messages are kept as long as there are consumers interested
 	}
 
 	// Check if the stream already exists.

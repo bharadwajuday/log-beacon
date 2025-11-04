@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"log-beacon/internal/model"
 	"log-beacon/internal/storage"
@@ -45,9 +46,18 @@ func main() {
 		log.Fatalf("Failed to create MinIO storage: %v", err)
 	}
 
-	// Ensure the log bucket exists.
-	if err := store.EnsureBucket(context.Background(), logBucketName); err != nil {
-		log.Fatalf("Failed to ensure MinIO bucket: %v", err)
+	// Ensure the log bucket exists, retrying for up to 30 seconds.
+	var bucketErr error
+	for i := 0; i < 10; i++ {
+		bucketErr = store.EnsureBucket(context.Background(), logBucketName)
+		if bucketErr == nil {
+			break
+		}
+		log.Printf("Waiting for MinIO bucket... attempt %d/10", i+1)
+		time.Sleep(3 * time.Second)
+	}
+	if bucketErr != nil {
+		log.Fatalf("Failed to ensure MinIO bucket after multiple retries: %v", bucketErr)
 	}
 
 	// --- NATS Subscription ---
