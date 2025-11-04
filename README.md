@@ -26,34 +26,41 @@ The project is organized into several key packages:
 ### Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
+- [Make](https://www.gnu.org/software/make/)
 
 ### Running the Environment
 
-The application is designed to run in a containerized environment managed by Docker Compose. This setup includes the `api` and `consumer` services, a `nats` message queue, and a `minio` object storage server.
+The entire development environment is managed via a `Makefile` for simplicity and consistency.
 
-1. **Clone the repository:**
-
+1.  **Clone the repository:**
     ```bash
     git clone https://github.com/your-username/log-beacon.git
     cd log-beacon
     ```
 
-2. **Build and Run:**
-    Use Docker Compose to build the images and start all services.
-
+2.  **Build and Run Services:**
+    This command ensures the necessary host directories are created, then builds the images and starts all services (`nats`, `minio`, `api`, `archiver`, `hot-storage`) in detached mode.
     ```bash
-    docker-compose up --build
+    make
+    ```
+    The API server will be available at `http://localhost:8080` and the MinIO console at `http://localhost:9001`.
+
+3.  **Follow Logs:**
+    To view the real-time logs from all running services:
+    ```bash
+    make logs
     ```
 
-3. **Accessing Services:**
-    - **API Server:** `http://localhost:8080`
-    - **MinIO Console:** `http://localhost:9001` (Login with `minioadmin`/`minioadmin`)
-
-4. **Stopping the services:**
-    To stop and remove the containers, run:
-
+4.  **Stop Services:**
+    To stop and remove all running containers:
     ```bash
-    docker-compose down
+    make down
+    ```
+
+5.  **Clean Up Data:**
+    To remove the persistent data stored on the host machine in `/tmp/log-beacon`:
+    ```bash
+    make clean
     ```
 
 ### API Endpoints

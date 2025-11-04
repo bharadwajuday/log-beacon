@@ -19,7 +19,8 @@ COPY . .
 # CGO_ENABLED=0: disables CGO to create a statically linked binary.
 # GOOS=linux: ensures the binary is built for a Linux environment.
 RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/api . && \
-    CGO_ENABLED=0 GOOS=linux go build -o /bin/consumer ./cmd/consumer
+    CGO_ENABLED=0 GOOS=linux go build -o /bin/archiver ./cmd/archiver && \
+    CGO_ENABLED=0 GOOS=linux go build -o /bin/hot-storage ./cmd/hot-storage
 
 # --- Stage 2: Final Image ---
 # Use a minimal, non-root base image for the final container.
@@ -28,7 +29,8 @@ FROM alpine:3.19
 
 # Copy the compiled binaries from the builder stage.
 COPY --from=builder /bin/api /bin/api
-COPY --from=builder /bin/consumer /bin/consumer
+COPY --from=builder /bin/archiver /bin/archiver
+COPY --from=builder /bin/hot-storage /bin/hot-storage
 
 # Expose port 8080 to the outside world.
 EXPOSE 8080
