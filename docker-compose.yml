@@ -57,8 +57,19 @@ services:
       - nats
     environment:
       - NATS_URL=nats://nats:4222
+    ports:
+      - "8081:8081"
     volumes:
       - hot-storage-data:/data
+
+  # Frontend UI Service
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
 
 # Define the named volumes
 volumes:

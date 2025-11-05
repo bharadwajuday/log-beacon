@@ -1,29 +1,24 @@
 package server
 
 import (
+	"io"
 	"log"
 	"net/http"
 
 	"log-beacon/internal/model"
+	"log-beacon/internal/queue"
 
 	"github.com/gin-gonic/gin"
 )
 
-// LogPublisher defines the interface for publishing log entries.
-// This allows for mocking in tests.
-type LogPublisher interface {
-	Publish(logEntry model.Log) error
-	Close()
-}
-
 // Server holds dependencies for the HTTP server.
 type Server struct {
 	router    *gin.Engine
-	publisher LogPublisher
+	publisher *queue.Publisher
 }
 
 // New creates a new HTTP server and sets up routing.
-func New(pub LogPublisher) *Server {
+func New(pub *queue.Publisher) *Server {
 	router := gin.Default()
 	s := &Server{
 		router:    router,
@@ -67,13 +62,25 @@ func (s *Server) handleIngest(c *gin.Context) {
 	c.JSON(http.StatusAccepted, gin.H{"status": "accepted"})
 }
 
-// handleSearch is a placeholder for the log search endpoint.
+// handleSearch proxies search requests to the hot-storage service.
 func (s *Server) handleSearch(c *gin.Context) {
-	query := c.DefaultQuery("q", "no_query_provided")
+	query := c.Query("q")
+	if query == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Query parameter 'q' is required"})
+		return
+	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"status":  "acknowledged",
-		"message": "Log search endpoint is working.",
-		"query":   query,
-	})
+	// Build the request to the hot-storage service.
+	hotStorageURL := "http://hot-storage:8081/search?q=" + query
+	resp, err := http.Get(hotStorageURL)
+	if err != nil {
+		log.Printf("Error contacting hot-storage service: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to perform search"})
+		return
+	}
+	defer resp.Body.Close()
+
+	// Proxy the response headers and body.
+	// c.Writer.WriteHeader(resp.StatusCode)
+	io.Copy(c.Writer, resp.Body)
 }
