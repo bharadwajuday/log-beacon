@@ -6,23 +6,29 @@ import (
 	"net/http"
 
 	"log-beacon/internal/model"
-	"log-beacon/internal/queue"
 
 	"github.com/gin-gonic/gin"
 )
 
+// LogPublisher defines the interface for publishing log entries.
+type LogPublisher interface {
+	Publish(logEntry model.Log) error
+}
+
 // Server holds dependencies for the HTTP server.
 type Server struct {
-	router    *gin.Engine
-	publisher *queue.Publisher
+	router        *gin.Engine
+	publisher     LogPublisher
+	hotStorageURL string
 }
 
 // New creates a new HTTP server and sets up routing.
-func New(pub *queue.Publisher) *Server {
+func New(pub LogPublisher, hotStorageURL string) *Server {
 	router := gin.Default()
 	s := &Server{
-		router:    router,
-		publisher: pub,
+		router:        router,
+		publisher:     pub,
+		hotStorageURL: hotStorageURL,
 	}
 
 	// --- API Route Group ---
@@ -71,8 +77,7 @@ func (s *Server) handleSearch(c *gin.Context) {
 	}
 
 	// Build the request to the hot-storage service.
-	hotStorageURL := "http://hot-storage:8081/search?q=" + query
-	resp, err := http.Get(hotStorageURL)
+	resp, err := http.Get(s.hotStorageURL + "/search?q=" + query)
 	if err != nil {
 		log.Printf("Error contacting hot-storage service: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to perform search"})

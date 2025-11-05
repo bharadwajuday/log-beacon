@@ -25,8 +25,12 @@ func main() {
 	}
 	defer publisher.Close()
 
+	hotStorageURL := os.Getenv("HOT_STORAGE_URL")
+	if hotStorageURL == "" {
+		log.Fatal("HOT_STORAGE_URL environment variable not set.")
+	}
 	// Create a new server with the publisher dependency.
-	srv := server.New(publisher)
+	srv := server.New(publisher, hotStorageURL)
 
 	// Start the server on port 8080.
 	log.Println("Starting API server on port 8080...")

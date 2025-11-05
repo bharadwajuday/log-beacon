@@ -68,7 +68,7 @@ func TestEnsureStream_UpdatesStreamWhenExists(t *testing.T) {
 		Name:      "LOGS",
 		Subjects:  []string{"old.subject"},
 		Storage:   nats.FileStorage,
-		Retention: nats.WorkQueuePolicy, // This is the crucial fix!
+		Retention: nats.InterestPolicy, // This is the crucial fix!
 	})
 	require.NoError(t, err)
 

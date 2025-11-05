@@ -27,15 +27,15 @@ func (m *MockPublisher) Close() {
 	m.Called()
 }
 
-func setupTestServer(publisher *MockPublisher) *gin.Engine {
+func setupTestServer(publisher *MockPublisher, hotStorageURL string) *gin.Engine {
 	gin.SetMode(gin.TestMode)
-	server := New(publisher)
+	server := New(publisher, hotStorageURL)
 	return server.router
 }
 
 func TestHealthCheck(t *testing.T) {
 	mockPublisher := new(MockPublisher)
-	router := setupTestServer(mockPublisher)
+	router := setupTestServer(mockPublisher, "")
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/health", nil)
@@ -48,7 +48,7 @@ func TestHealthCheck(t *testing.T) {
 func TestHandleIngest(t *testing.T) {
 	t.Run("successful ingest", func(t *testing.T) {
 		mockPublisher := new(MockPublisher)
-		router := setupTestServer(mockPublisher)
+		router := setupTestServer(mockPublisher, "")
 
 		logEntry := model.Log{Level: "info", Message: "test log"}
 		mockPublisher.On("Publish", logEntry).Return(nil)
@@ -65,7 +65,7 @@ func TestHandleIngest(t *testing.T) {
 
 	t.Run("bad request", func(t *testing.T) {
 		mockPublisher := new(MockPublisher)
-		router := setupTestServer(mockPublisher)
+		router := setupTestServer(mockPublisher, "")
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/ingest", bytes.NewBufferString("invalid json"))
@@ -77,8 +77,16 @@ func TestHandleIngest(t *testing.T) {
 }
 
 func TestHandleSearch(t *testing.T) {
+	// Create a mock hot-storage server
+	mockStorageServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query().Get("q")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"query":"` + query + `"}`))
+	}))
+	defer mockStorageServer.Close()
+
 	mockPublisher := new(MockPublisher)
-	router := setupTestServer(mockPublisher)
+	router := setupTestServer(mockPublisher, mockStorageServer.URL)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/v1/search?q=error", nil)
