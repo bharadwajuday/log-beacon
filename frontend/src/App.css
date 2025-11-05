@@ -1,42 +1,45 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
+body {
+  background-color: #f0f2f5; /* A light grey background for a softer look */
+  color: #333;
+  min-height: 100vh; /* Ensure body takes full viewport height */
+  display: flex; /* Enable flexbox for centering */
+  flex-direction: column; /* Arrange children vertically */
+}
+
+.app-container {
+  max-width: 960px; /* Limit the width for better readability on large screens */
+  margin: 0 auto; /* Center the container */
   padding: 2rem;
-  text-align: center;
+  flex-grow: 1; /* Allow container to grow and push content */
+  display: flex;
+  flex-direction: column;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.search-section {
+  flex-grow: 1; /* Allow this section to take available space */
+  display: flex;
+  align-items: center; /* Center vertically */
+  justify-content: center; /* Center horizontally */
+  padding: 2rem 0;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.search-container {
+  width: 100%; /* Take full width of its parent */
+  max-width: 600px; /* Limit the width of the search bar itself */
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.results-container {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-top: 2rem; /* Add some space above results */
 }
 
-.card {
-  padding: 2em;
+.table {
+  margin-bottom: 0; /* Remove default bottom margin from the table */
 }
 
-.read-the-docs {
-  color: #888;
+.badge {
+  font-size: 0.8rem;
 }

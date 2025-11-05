@@ -32,33 +32,39 @@ The project is organized into several key packages:
 
 The entire development environment is managed via a `Makefile` for simplicity and consistency.
 
-1.  **Clone the repository:**
+1. **Clone the repository:**
+
     ```bash
     git clone https://github.com/your-username/log-beacon.git
     cd log-beacon
     ```
 
-2.  **Build and Run Services:**
+2. **Build and Run Services:**
     This command ensures the necessary host directories are created, then builds the images and starts all services (`nats`, `minio`, `api`, `archiver`, `hot-storage`) in detached mode.
+
     ```bash
     make
     ```
-    The API server will be available at `http://localhost:8080` and the MinIO console at `http://localhost:9001`.
 
-3.  **Follow Logs:**
+    The API server will be available at `http://localhost:8080`, the MinIO console at `http://localhost:9001`, and the web UI at `http://localhost:3000`.
+
+3. **Follow Logs:**
     To view the real-time logs from all running services:
+
     ```bash
     make logs
     ```
 
-4.  **Stop Services:**
+4. **Stop Services:**
     To stop and remove all running containers:
+
     ```bash
     make down
     ```
 
-5.  **Clean Up Data:**
+5. **Clean Up Data:**
     To remove the persistent data stored on the host machine in `/tmp/log-beacon`:
+
     ```bash
     make clean
     ```

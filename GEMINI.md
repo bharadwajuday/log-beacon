@@ -16,19 +16,20 @@ Log Beacon is a log management system inspired by Humio. The primary goal is to 
 
 ## High-Level Architecture
 
-Log Beacon now uses a hot/cold storage architecture to provide both fast, real-time search and durable, long-term storage.
+Log Beacon uses a hot/cold storage architecture to provide both fast, real-time search and durable, long-term storage.
 
--   **API Handler (`api` service):** A Go service using Gin that exposes the `/api/v1/ingest` endpoint. It validates incoming logs and publishes them to a NATS subject.
--   **Message Queue (`nats` service):** A NATS server with JetStream enabled, acting as a durable buffer.
--   **Cold Storage (`archiver` service):** A Go consumer that subscribes to the NATS subject, compresses logs, and writes them as gzipped objects to a MinIO bucket for long-term archival.
--   **Hot Storage (`hot-storage` service - Planned):** A new Go consumer that will also subscribe to the NATS subject. It will use Bleve (full-text index) and BadgerDB (key-value store) to provide a fast, searchable index of recent logs.
--   **Object Storage (`minio` service):**
-    -   **Log Data (Chunks):** A MinIO server stores the compressed log data from the `archiver`.
+- **Frontend (`frontend` service):** A React-based single-page application that provides the user interface for searching logs. It communicates with the `api` service.
+- **API Handler (`api` service):** A Go service using Gin that exposes the `/api/v1/ingest` and `/api/v1/search` endpoints. It validates incoming logs, publishes them to NATS, and proxies search requests to the `hot-storage` service.
+- **Message Queue (`nats` service):** A NATS server with JetStream enabled, acting as a durable buffer.
+- **Cold Storage (`archiver` service):** A Go consumer that subscribes to the NATS subject and writes logs to a MinIO bucket for long-term archival.
+- **Hot Storage (`hot-storage` service):** A Go consumer that subscribes to the NATS subject and uses Bleve and BadgerDB to provide a fast, searchable index of recent logs. It also exposes an internal search API.
+- **Object Storage (`minio` service):** A MinIO server that stores the compressed log data from the `archiver`.
 
 ## Current Status
 
--   The project is managed via a `Makefile` which automates directory creation and `docker-compose` commands.
--   The environment consists of five services: `nats`, `minio`, `api`, `archiver`, and `hot-storage`.
--   The `archiver` service (previously `consumer`) is fully functional and writes logs to MinIO.
--   A placeholder `hot-storage` service has been created and is running in a container.
--   Persistent data volumes for all stateful services are managed via `docker-compose` and created on the host in `/tmp/log-beacon`.
+- The project is managed via a `Makefile` which automates directory creation and `docker-compose` commands.
+- The environment consists of six services: `nats`, `minio`, `api`, `archiver`, `hot-storage`, and `frontend`.
+- The `archiver` service writes logs to MinIO.
+- The `hot-storage` service indexes logs and serves search queries via an internal API.
+- The `frontend` service provides a functional and styled UI for searching logs via the main `api` service.
+- Persistent data volumes for all stateful services are managed via `docker-compose` and created on the host in `/tmp/log-beacon`.

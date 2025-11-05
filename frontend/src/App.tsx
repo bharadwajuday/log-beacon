@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import axios from 'axios';
+import './App.css'; // Import our custom styles
 
 // Define the structure of a log entry based on our backend model
 interface LogEntry {
@@ -23,7 +24,6 @@ function App() {
     setIsLoading(true);
     setError(null);
     try {
-      // Make the API call to our backend. The /api prefix will be proxied by Nginx.
       const response = await axios.get<LogEntry[]>(`/api/v1/search?q=${query}`);
       setResults(response.data || []);
     } catch (err) {
@@ -36,56 +36,79 @@ function App() {
   }, [query]);
 
   return (
-    <div className="container mt-4">
+    <div className="app-container">
       <header className="text-center mb-4">
         <h1>Log Beacon</h1>
-        <p className="lead">Search and explore your logs</p>
+        <p className="lead text-muted">Your centralized log search</p>
       </header>
 
-      <div className="input-group mb-3">
-        <input
-          type="text"
-          className="form-control"
-          placeholder="Search logs... (e.g., error, authentication, payment)"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-        />
-        <button className="btn btn-primary" type="button" onClick={handleSearch} disabled={isLoading}>
-          {isLoading ? 'Searching...' : 'Search'}
-        </button>
-      </div>
+      <main>
+        <div className="search-section">
+          <div className="search-container">
+            <div className="input-group input-group-lg mb-3">
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Search logs..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              />
+                          <button className="btn btn-primary" type="button" onClick={handleSearch} disabled={isLoading}>
+                            {isLoading ? (
+                              <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            ) : (
+                              'Search'
+                            )}
+                          </button>            </div>
+          </div>
+        </div>
 
-      {error && <div className="alert alert-danger">{error}</div>}
+        {error && <div className="alert alert-danger mx-auto" style={{ maxWidth: '960px' }}>{error}</div>}
 
-      <div className="table-responsive">
-        <table className="table table-striped table-hover">
-          <thead className="table-dark">
-            <tr>
-              <th scope="col">Timestamp</th>
-              <th scope="col">Level</th>
-              <th scope="col">Message</th>
-            </tr>
-          </thead>
-          <tbody>
-            {results.length > 0 ? (
-              results.map((log, index) => (
-                <tr key={index}>
-                  <td>{new Date(log.timestamp).toLocaleString()}</td>
-                  <td><span className={`badge bg-${log.level === 'error' ? 'danger' : 'secondary'}`}>{log.level || 'info'}</span></td>
-                  <td>{log.message}</td>
+        <div className="results-container">
+          <div className="table-responsive">
+            <table className="table table-striped table-hover">
+              <thead className="table-light">
+                <tr>
+                  <th scope="col">Timestamp</th>
+                  <th scope="col">Level</th>
+                  <th scope="col">Message</th>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={3} className="text-center text-muted">
-                  {isLoading ? 'Loading results...' : 'No logs found. Try a new search.'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={3} className="text-center text-muted">Loading results...</td>
+                  </tr>
+                ) : error ? (
+                  <tr>
+                    <td colSpan={3} className="text-center text-danger">{error}</td>
+                  </tr>
+                ) : results.length > 0 ? (
+                  results.map((log, index) => (
+                    <tr key={index}>
+                      <td className="text-nowrap">{new Date(log.timestamp).toLocaleString()}</td>
+                      <td>
+                        <span className={`badge bg-${log.level === 'error' ? 'danger' : 'secondary'}`}>
+                          {log.level || 'info'}
+                        </span>
+                      </td>
+                      <td>{log.message}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3} className="text-center text-muted">
+                      No logs found. Enter a query and click search.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
