@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 
 	"log-beacon/internal/model"
 
@@ -44,7 +45,7 @@ func (s *Searcher) Close() {
 	}
 }
 
-// HandleSearch performs a search against the index.
+// HandleSearch performs a paginated search against the index.
 func (s *Searcher) HandleSearch(c *gin.Context) {
 	queryStr := c.Query("q")
 	if queryStr == "" {
@@ -52,10 +53,23 @@ func (s *Searcher) HandleSearch(c *gin.Context) {
 		return
 	}
 
+	// Parse pagination parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "50"))
+	if page < 1 {
+		page = 1
+	}
+	if size < 1 || size > 100 {
+		size = 50 // Default and max size
+	}
+
+	// Build the Bleve search query.
 	query := bleve.NewQueryStringQuery(queryStr)
 	searchRequest := bleve.NewSearchRequest(query)
-	searchRequest.Size = 100
+	searchRequest.Size = size
+	searchRequest.From = (page - 1) * size
 
+	// Execute the search.
 	searchResults, err := s.Index.Search(searchRequest)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to execute search"})

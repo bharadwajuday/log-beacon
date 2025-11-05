@@ -35,6 +35,7 @@ services:
       - nats
     environment:
       - NATS_URL=nats://nats:4222
+      - HOT_STORAGE_URL=http://hot-storage:8081
 
   # Archiver Service (Cold Storage)
   archiver:

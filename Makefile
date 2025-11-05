@@ -27,6 +27,16 @@ logs:
 	@echo "--> Tailing logs for all services (Press Ctrl+C to stop)..."
 	@docker-compose -f $(COMPOSE_FILE) logs -f
 
+# Target to run unit tests.
+# It starts the test environment, runs the tests, and then tears down the environment.
+test:
+	@echo "--> Starting test environment..."
+	@docker-compose -f docker-compose.test.yml up -d
+	@echo "--> Running unit tests..."
+	@go test -v ./...
+	@echo "--> Tearing down test environment..."
+	@docker-compose -f docker-compose.test.yml down
+
 # Target to clean up the host data directories.
 clean:
 	@echo "--> Removing host data directories..."

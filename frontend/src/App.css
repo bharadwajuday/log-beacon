@@ -1,45 +1,87 @@
+:root {
+  --background-color-light: #f0f2f5;
+  --text-color-light: #333;
+  --card-background-light: #ffffff;
+  --table-header-light: #f8f9fa;
+  --shadow-color-light: rgba(0, 0, 0, 0.1);
+
+  --background-color-dark: #121212;
+  --text-color-dark: #e0e0e0;
+  --card-background-dark: #1e1e1e;
+  --table-header-dark: #2c2c2c;
+  --shadow-color-dark: rgba(255, 255, 255, 0.1);
+}
+
 body {
-  background-color: #f0f2f5; /* A light grey background for a softer look */
-  color: #333;
-  min-height: 100vh; /* Ensure body takes full viewport height */
-  display: flex; /* Enable flexbox for centering */
-  flex-direction: column; /* Arrange children vertically */
+  background-color: var(--background-color-light);
+  color: var(--text-color-light);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.dark-mode body {
+  --background-color-light: var(--background-color-dark);
+  --text-color-light: var(--text-color-dark);
+  --card-background-light: var(--card-background-dark);
+  --table-header-light: var(--table-header-dark);
+  --shadow-color-light: var(--shadow-color-dark);
 }
 
 .app-container {
-  max-width: 960px; /* Limit the width for better readability on large screens */
-  margin: 0 auto; /* Center the container */
+  max-width: 960px;
+  margin: 0 auto;
   padding: 2rem;
-  flex-grow: 1; /* Allow container to grow and push content */
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
 }
 
 .search-section {
-  flex-grow: 1; /* Allow this section to take available space */
+  flex-grow: 1;
   display: flex;
-  align-items: center; /* Center vertically */
-  justify-content: center; /* Center horizontally */
+  align-items: center;
+  justify-content: center;
   padding: 2rem 0;
 }
 
 .search-container {
-  width: 100%; /* Take full width of its parent */
-  max-width: 600px; /* Limit the width of the search bar itself */
+  width: 100%;
+  max-width: 600px;
 }
 
 .results-container {
-  background-color: #ffffff;
+  background-color: var(--card-background-light);
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--shadow-color-light);
   padding: 1.5rem;
-  margin-top: 2rem; /* Add some space above results */
+  margin-top: 2rem;
+  transition: background-color 0.3s, box-shadow 0.3s;
 }
 
 .table {
-  margin-bottom: 0; /* Remove default bottom margin from the table */
+  margin-bottom: 0;
+}
+
+.table-light {
+  --bs-table-bg: var(--table-header-light);
+}
+
+.dark-mode .table-striped > tbody > tr:nth-of-type(odd) > * {
+    --bs-table-accent-bg: rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .table {
+    color: var(--text-color-dark);
 }
 
 .badge {
   font-size: 0.8rem;
+}
+
+.theme-toggle {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
 }

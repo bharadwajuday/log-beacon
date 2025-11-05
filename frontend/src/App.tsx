@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
 import './App.css'; // Import our custom styles
 
@@ -10,21 +10,33 @@ interface LogEntry {
   labels: Record<string, string>;
 }
 
+const PAGE_SIZE = 50;
+
 function App() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<LogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
 
-  const handleSearch = useCallback(async () => {
+  // Apply theme to body and save preference
+  useEffect(() => {
+    document.body.parentElement?.setAttribute('class', theme === 'dark' ? 'dark-mode' : '');
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const handleSearch = useCallback(async (newPage: number) => {
     if (!query) {
       setResults([]);
       return;
     }
     setIsLoading(true);
     setError(null);
+    setPage(newPage);
+
     try {
-      const response = await axios.get<LogEntry[]>(`/api/v1/search?q=${query}`);
+      const response = await axios.get<LogEntry[]>(`/api/v1/search?q=${query}&page=${newPage}&size=${PAGE_SIZE}`);
       setResults(response.data || []);
     } catch (err) {
       setError('Failed to fetch search results. Is the backend running?');
@@ -35,8 +47,41 @@ function App() {
     }
   }, [query]);
 
+  // Reset page to 1 when a new query is typed
+  useEffect(() => {
+    setPage(1);
+  }, [query]);
+
+  const toggleTheme = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light');
+  };
+
+  const PaginationControls = () => (
+    <div className="d-flex justify-content-between align-items-center my-3">
+      <button 
+        className="btn btn-secondary" 
+        onClick={() => handleSearch(page - 1)} 
+        disabled={page <= 1 || isLoading}
+      >
+        &larr;
+      </button>
+      <button 
+        className="btn btn-secondary" 
+        onClick={() => handleSearch(page + 1)} 
+        disabled={results.length < PAGE_SIZE || isLoading}
+      >
+        &rarr;
+      </button>
+    </div>
+  );
+
   return (
     <div className="app-container">
+      <div className="form-check form-switch theme-toggle">
+        <input className="form-check-input" type="checkbox" role="switch" id="themeSwitch" checked={theme === 'dark'} onChange={toggleTheme} />
+        <label className="form-check-label" htmlFor="themeSwitch">Dark Mode</label>
+      </div>
+
       <header className="text-center mb-4">
         <h1>Log Beacon</h1>
         <p className="lead text-muted">Your centralized log search</p>
@@ -52,15 +97,16 @@ function App() {
                 placeholder="Search logs..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch(1)}
               />
-                          <button className="btn btn-primary" type="button" onClick={handleSearch} disabled={isLoading}>
-                            {isLoading ? (
-                              <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                            ) : (
-                              'Search'
-                            )}
-                          </button>            </div>
+              <button className="btn btn-primary px-4" type="button" onClick={() => handleSearch(1)} disabled={isLoading}>
+                {isLoading && page === 1 ? (
+                  <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                ) : (
+                  'Search'
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -68,7 +114,7 @@ function App() {
 
         <div className="results-container">
           <div className="table-responsive">
-            <table className="table table-striped table-hover">
+            <table className={`table table-striped table-hover ${theme === 'dark' ? 'table-dark' : ''}`}>
               <thead className="table-light">
                 <tr>
                   <th scope="col">Timestamp</th>
@@ -79,11 +125,7 @@ function App() {
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={3} className="text-center text-muted">Loading results...</td>
-                  </tr>
-                ) : error ? (
-                  <tr>
-                    <td colSpan={3} className="text-center text-danger">{error}</td>
+                    <td colSpan={3} className="text-center text-muted py-5">Loading results...</td>
                   </tr>
                 ) : results.length > 0 ? (
                   results.map((log, index) => (
@@ -99,7 +141,7 @@ function App() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3} className="text-center text-muted">
+                    <td colSpan={3} className="text-center text-muted py-5">
                       No logs found. Enter a query and click search.
                     </td>
                   </tr>
@@ -107,6 +149,7 @@ function App() {
               </tbody>
             </table>
           </div>
+          {results.length > 0 && <PaginationControls />}
         </div>
       </main>
     </div>
