@@ -15,27 +15,27 @@ up:
 	@echo "--> Ensuring host directories for persistent data exist..."
 	@mkdir -p $(HOST_DATA_DIRS)
 	@echo "--> Building and starting services in detached mode..."
-	@docker-compose -f $(COMPOSE_FILE) up --build -d
+	@docker compose -f $(COMPOSE_FILE) up --build -d
 
 # Target to stop and remove all services.
 down:
 	@echo "--> Stopping and removing all services..."
-	@docker-compose -f $(COMPOSE_FILE) down
+	@docker compose -f $(COMPOSE_FILE) down
 
 # Target to follow the logs of all running services.
 logs:
 	@echo "--> Tailing logs for all services (Press Ctrl+C to stop)..."
-	@docker-compose -f $(COMPOSE_FILE) logs -f
+	@docker compose -f $(COMPOSE_FILE) logs -f
 
 # Target to run unit tests.
 # It starts the test environment, runs the tests, and then tears down the environment.
 test:
 	@echo "--> Starting test environment..."
-	@docker-compose -f docker-compose.test.yml up -d
+	@docker compose -f docker-compose.test.yml up -d
 	@echo "--> Running unit tests..."
 	@go test -v ./...
 	@echo "--> Tearing down test environment..."
-	@docker-compose -f docker-compose.test.yml down
+	@docker compose -f docker-compose.test.yml down
 
 # Target to clean up the host data directories.
 clean:

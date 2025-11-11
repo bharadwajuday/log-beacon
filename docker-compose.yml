@@ -72,6 +72,15 @@ services:
     depends_on:
       - api
 
+  # Frontend UI Service v2
+  frontendv2:
+    build:
+      context: ./frontendv2
+    ports:
+      - "3001:80"
+    depends_on:
+      - api
+
 # Define the named volumes
 volumes:
   nats-data:
