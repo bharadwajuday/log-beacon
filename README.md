@@ -6,7 +6,7 @@ Log Beacon is a high-performance, Humio-inspired log ingestion and search platfo
 
 Log Beacon uses a decoupled, microservices-oriented architecture built on a hot/cold storage strategy.
 
-- **Frontend (`frontend`):** A React single-page application providing the search UI.
+- **Frontend (`frontendv2`):** A React single-page application providing the search UI, built with Vite and Tailwind CSS.
 - **API Handler (`api`):** The main entrypoint for ingestion and search requests.
 - **Message Queue (`nats`):** A NATS server with JetStream that acts as a durable buffer for incoming logs.
 - **Hot Storage (`hot-storage`):** A consumer that indexes recent logs in Bleve and BadgerDB for fast, real-time searching.

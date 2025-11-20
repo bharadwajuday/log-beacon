@@ -63,15 +63,13 @@ services:
     volumes:
       - hot-storage-data:/data
 
-  # Frontend UI Service
-  frontend:
-    build:
-      context: ./frontend
+
+  frontendv2:
+    build: ./frontendv2
     ports:
       - "3000:80"
     depends_on:
       - api
-
 
 
 # Define the named volumes

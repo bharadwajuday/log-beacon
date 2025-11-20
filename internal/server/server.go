@@ -1,10 +1,10 @@
 package server
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"fmt"
 
 	"log-beacon/internal/model"
 
@@ -78,7 +78,7 @@ func (s *Server) handleSearch(c *gin.Context) {
 	}
 
 	// Build the request to the hot-storage service, including pagination params.
-	hotStorageURL := fmt.Sprintf("http://hot-storage:8081/search?q=%s&page=%s&size=%s", 
+	hotStorageURL := fmt.Sprintf("http://hot-storage:8081/search?q=%s&page=%s&size=%s",
 		c.Query("q"), c.DefaultQuery("page", "1"), c.DefaultQuery("size", "50"))
 
 	resp, err := http.Get(hotStorageURL)
