@@ -2,6 +2,18 @@
 
 Log Beacon is a high-performance, Humio-inspired log ingestion and search platform built with Go and React. It provides a simple and efficient way for developers to ingest, store, and search through application logs, aiding in debugging and analysis.
 
+## Features
+
+- **Log Ingestion**: HTTP API for ingesting logs.
+- **Hot Storage**: Fast, indexed search using Bleve and BadgerDB.
+- **Cold Storage**: Long-term archival to MinIO.
+- **Search**:
+    - Full-text search on log messages.
+    - Structured search on fields (e.g., `level:error`, `service:auth`).
+    - Boolean operators: `AND`, `OR` (e.g., `service:auth AND level:error`).
+    - Log level filtering via UI.
+- **Frontend**: Modern React-based UI for searching and viewing logs.
+
 ## Architecture
 
 Log Beacon uses a decoupled, microservices-oriented architecture built on a hot/cold storage strategy.

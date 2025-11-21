@@ -1,10 +1,12 @@
 package server
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"net/url"
+	"path"
+	"strings"
 
 	"log-beacon/internal/model"
 
@@ -78,10 +80,39 @@ func (s *Server) handleSearch(c *gin.Context) {
 	}
 
 	// Build the request to the hot-storage service, including pagination params.
-	hotStorageURL := fmt.Sprintf("http://hot-storage:8081/search?q=%s&page=%s&size=%s",
-		c.Query("q"), c.DefaultQuery("page", "1"), c.DefaultQuery("size", "50"))
+	// We use s.hotStorageURL which is injected (env var in main, mock URL in tests).
+	baseURLStr := s.hotStorageURL
+	if baseURLStr == "" {
+		// Fallback if not set (should be set in main)
+		baseURLStr = "http://hot-storage:8081"
+	}
+	// Ensure scheme
+	if !strings.HasPrefix(baseURLStr, "http://") && !strings.HasPrefix(baseURLStr, "https://") {
+		baseURLStr = "http://" + baseURLStr
+	}
 
-	resp, err := http.Get(hotStorageURL)
+	u, err := url.Parse(baseURLStr)
+	if err != nil {
+		log.Printf("Error parsing hot-storage URL: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal configuration error"})
+		return
+	}
+
+	// Append /search path if not present.
+	// We assume the config is just the host or base URL.
+	// If the config already has /search, we shouldn't duplicate it.
+	// Simple heuristic: if path doesn't end in /search, append it.
+	// But in tests, mock URL is random.
+	// Let's assume s.hotStorageURL is the *service root*.
+	u.Path = path.Join(u.Path, "search")
+
+	q := u.Query()
+	q.Set("q", c.Query("q"))
+	q.Set("page", c.DefaultQuery("page", "1"))
+	q.Set("size", c.DefaultQuery("size", "50"))
+	u.RawQuery = q.Encode()
+
+	resp, err := http.Get(u.String())
 	if err != nil {
 		log.Printf("Error contacting hot-storage service: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to perform search"})
@@ -90,6 +121,6 @@ func (s *Server) handleSearch(c *gin.Context) {
 	defer resp.Body.Close()
 
 	// Proxy the response headers and body.
-	// c.Writer.WriteHeader(resp.StatusCode)
+	c.Writer.WriteHeader(resp.StatusCode)
 	io.Copy(c.Writer, resp.Body)
 }

@@ -4,11 +4,15 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
+
+	"strings"
 
 	"log-beacon/internal/model"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/search/query"
 	"github.com/dgraph-io/badger/v4"
 	"github.com/gin-gonic/gin"
 )
@@ -64,7 +68,7 @@ func (s *Searcher) HandleSearch(c *gin.Context) {
 	}
 
 	// Build the Bleve search query.
-	query := bleve.NewQueryStringQuery(queryStr)
+	query := parseQuery(queryStr)
 	searchRequest := bleve.NewSearchRequest(query)
 	searchRequest.Size = size
 	searchRequest.From = (page - 1) * size
@@ -101,6 +105,64 @@ func (s *Searcher) HandleSearch(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, results)
+}
+
+// parseQuery parses the query string and returns a Bleve query object.
+// It supports a simple " AND " operator to combine multiple query parts.
+func parseQuery(queryString string) query.Query {
+	parts := strings.Split(queryString, " AND ")
+	if len(parts) == 1 {
+		return bleve.NewQueryStringQuery(rewriteQuery(stripOuterParentheses(queryString)))
+	}
+	conj := bleve.NewConjunctionQuery()
+	for _, p := range parts {
+		conj.AddQuery(bleve.NewQueryStringQuery(rewriteQuery(stripOuterParentheses(p))))
+	}
+	return conj
+}
+
+// stripOuterParentheses removes the outer parentheses if the string is fully wrapped in them.
+func stripOuterParentheses(s string) string {
+	s = strings.TrimSpace(s)
+	if len(s) < 2 {
+		return s
+	}
+	if strings.HasPrefix(s, "(") && strings.HasSuffix(s, ")") {
+		// Check if they are balanced and wrapping the whole string
+		count := 0
+		for i, r := range s {
+			if r == '(' {
+				count++
+			} else if r == ')' {
+				count--
+			}
+			if count == 0 && i < len(s)-1 {
+				// Balanced before the end, so not fully wrapped
+				// e.g. "(a) OR (b)"
+				return s
+			}
+		}
+		if count == 0 {
+			return s[1 : len(s)-1]
+		}
+	}
+	return s
+}
+
+var fieldRegex = regexp.MustCompile(`\b([a-zA-Z0-9_]+):`)
+
+// rewriteQuery rewrites field names that are not top-level fields to be under "labels.".
+func rewriteQuery(q string) string {
+	return fieldRegex.ReplaceAllStringFunc(q, func(match string) string {
+		// match is like "service:"
+		field := match[:len(match)-1]
+		switch strings.ToLower(field) {
+		case "level", "message", "timestamp", "labels":
+			return match
+		default:
+			return "labels." + match
+		}
+	})
 }
 
 // openBleveIndex opens a Bleve index, creating it if it doesn't exist.

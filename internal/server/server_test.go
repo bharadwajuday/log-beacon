@@ -94,4 +94,14 @@ func TestHandleSearch(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), `"query":"error"`)
+
+	// Test with AND query (spaces)
+	w2 := httptest.NewRecorder()
+	req2, _ := http.NewRequest("GET", "/api/v1/search?q=level:error AND service:auth", nil)
+	router.ServeHTTP(w2, req2)
+
+	assert.Equal(t, http.StatusOK, w2.Code)
+	// The mock server returns the query param as is.
+	// Since we are now encoding it properly, the mock server (which uses r.URL.Query().Get("q")) should decode it back to the original string.
+	assert.Contains(t, w2.Body.String(), `"query":"level:error AND service:auth"`)
 }

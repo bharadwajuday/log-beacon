@@ -2,9 +2,11 @@
 
 This file tracks potential next steps and features to improve the Log Beacon platform.
 
-1.  **Refine the Search Query:**
-    -   Enhance the search API (`/api/v1/search`) to support structured queries on labels (e.g., `level:error AND service:api-gateway`).
-    -   This will involve parsing the query string and building more complex Bleve queries in the `hot-storage` service.
+1.- [x] **Refine the Search Query**:
+  - Currently, the search is a simple query string.
+  - We need to support structured queries like `level:error AND service:api-gateway`.
+  - This will require parsing the query string in the backend and constructing a more complex Bleve query.
+  - **Status**: Completed. Implemented `AND` operator, automatic label rewriting, and frontend integration.ies in the `hot-storage` service.
 
 2.  **Implement Log Retention in Hot Storage:**
     -   Add a mechanism to the `hot-storage` service to periodically purge old data from Bleve and BadgerDB.
