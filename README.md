@@ -12,6 +12,7 @@ Log Beacon is a high-performance, Humio-inspired log ingestion and search platfo
     - Structured search on fields (e.g., `level:error`, `service:auth`).
     - Boolean operators: `AND`, `OR` (e.g., `service:auth AND level:error`).
     - Log level filtering via UI.
+- **Live Tail**: Real-time log streaming via WebSockets, similar to `tail -f`.
 - **Frontend**: Modern React-based UI for searching and viewing logs.
 
 ## Architecture

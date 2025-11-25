@@ -4,11 +4,13 @@ interface HeaderProps {
     query: string;
     setQuery: (query: string) => void;
     onSearch: () => void;
+    isLiveTail: boolean;
+    onToggleLiveTail: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ query, setQuery, onSearch }) => {
+const Header: React.FC<HeaderProps> = ({ query, setQuery, onSearch, isLiveTail, onToggleLiveTail }) => {
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter' && !isLiveTail) {
             onSearch();
         }
     };
@@ -29,15 +31,17 @@ const Header: React.FC<HeaderProps> = ({ query, setQuery, onSearch }) => {
                 <label className="flex flex-col w-full !h-10 max-w-2xl">
                     <div className="flex w-full flex-1 items-stretch rounded-lg h-full">
                         <input
-                            className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-l-lg text-text-light focus:outline-0 focus:ring-0 border-y border-l border-border-dark bg-panel-dark focus:border-primary h-full placeholder:text-text-subtle-dark px-4 text-base font-normal leading-normal"
-                            placeholder="Search logs..."
+                            className={`form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-l-lg text-text-light focus:outline-0 focus:ring-0 border-y border-l border-border-dark bg-panel-dark focus:border-primary h-full placeholder:text-text-subtle-dark px-4 text-base font-normal leading-normal ${isLiveTail ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            placeholder={isLiveTail ? "Live Tail Active..." : "Search logs..."}
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             onKeyDown={handleKeyDown}
+                            disabled={isLiveTail}
                         />
                         <button
-                            className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-r-lg h-10 px-4 bg-primary text-background-dark text-sm font-bold leading-normal tracking-[0.015em]"
+                            className={`flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-r-lg h-10 px-4 text-background-dark text-sm font-bold leading-normal tracking-[0.015em] ${isLiveTail ? 'bg-gray-500 cursor-not-allowed' : 'bg-primary'}`}
                             onClick={onSearch}
+                            disabled={isLiveTail}
                         >
                             <span className="truncate">Search</span>
                         </button>
@@ -45,6 +49,13 @@ const Header: React.FC<HeaderProps> = ({ query, setQuery, onSearch }) => {
                 </label>
             </div>
             <div className="flex flex-initial items-center justify-end gap-2">
+                <button
+                    className={`flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-4 ${isLiveTail ? 'bg-green-600 text-white animate-pulse' : 'bg-panel-dark text-text-light'}`}
+                    onClick={onToggleLiveTail}
+                >
+                    <span className="material-symbols-outlined">{isLiveTail ? 'stop' : 'play_arrow'}</span>
+                    <span className="truncate">{isLiveTail ? 'Live' : 'Live Tail'}</span>
+                </button>
                 <button className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-panel-dark text-text-light gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5">
                     <span className="material-symbols-outlined text-text-light">notifications</span>
                 </button>

@@ -14,8 +14,9 @@ This file tracks potential next steps and features to improve the Log Beacon pla
     -   A time-based retention policy (e.g., keep last 24 hours) is a good starting point.
 
 3.  **Build a "Live Tail" Feature:**
-    -   Add a WebSocket endpoint to the `api` service.
-    -   This endpoint would subscribe to the NATS stream and stream logs to a connected client in real-time, providing a `tail -f` like experience.
+    -   [x] Add a WebSocket endpoint to the `api` service.
+    -   [x] This endpoint would subscribe to the NATS stream and stream logs to a connected client in real-time, providing a `tail -f` like experience.
+    -   **Status**: Completed. Implemented WebSocket endpoint at `/api/v1/tail`.
 
 4.  **Explore the Cold Storage:**
     -   Build a mechanism to search the "cold" data stored in MinIO.
@@ -36,7 +37,7 @@ This file tracks potential next steps and features to improve the Log Beacon pla
     -   **Highlighting Search Terms:** Highlight the matching query terms within the displayed log messages.
 
 3.  **Real-time Features:**
-    -   **"Live Tail" Toggle:** Add a UI switch to connect to a WebSocket and stream logs in real-time.
+    -   [x] **"Live Tail" Toggle:** Add a UI switch to connect to a WebSocket and stream logs in real-time.
 
 4.  **Usability and Polish:**
     -   **Clear Search Button:** Add an "X" icon to the search bar to clear the input.

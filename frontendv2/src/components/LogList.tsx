@@ -7,9 +7,10 @@ interface LogListProps {
     isLoading: boolean;
     error: string | null;
     hasSearched: boolean;
+    isLiveTail: boolean;
 }
 
-const LogList: React.FC<LogListProps> = ({ logs, isLoading, error, hasSearched }) => {
+const LogList: React.FC<LogListProps> = ({ logs, isLoading, error, hasSearched, isLiveTail }) => {
     const getLevelColor = (level: string) => {
         switch (level.toUpperCase()) {
             case 'ERROR': return 'bg-error text-white';
@@ -20,11 +21,11 @@ const LogList: React.FC<LogListProps> = ({ logs, isLoading, error, hasSearched }
         }
     };
 
-    if (!hasSearched) {
+    if (!hasSearched && !isLiveTail) {
         return (
             <main className="flex-1 p-6 bg-panel-dark overflow-y-auto flex items-center justify-center">
                 <div className="text-center text-text-subtle-dark">
-                    <p className="text-xl">Enter a query to search logs</p>
+                    <p className="text-xl">Enter a query to search logs or start Live Tail</p>
                 </div>
             </main>
         );
@@ -34,9 +35,22 @@ const LogList: React.FC<LogListProps> = ({ logs, isLoading, error, hasSearched }
         <main className="flex-1 p-6 bg-panel-dark overflow-y-auto">
             <div className="flex flex-wrap justify-between gap-3 pb-4 border-b border-border-dark">
                 <div className="flex min-w-72 flex-col gap-1">
-                    <p className="text-text-light text-2xl font-bold leading-tight tracking-[-0.033em]">Search Results</p>
+                    <div className="flex items-center gap-2">
+                        <p className="text-text-light text-2xl font-bold leading-tight tracking-[-0.033em]">
+                            {isLiveTail ? 'Live Logs' : 'Search Results'}
+                        </p>
+                        {isLiveTail && (
+                            <span className="relative flex h-3 w-3">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                            </span>
+                        )}
+                    </div>
                     <p className="text-text-subtle-dark text-sm font-normal leading-normal">
-                        {isLoading ? 'Searching...' : `Showing ${logs.length} results`}
+                        {isLiveTail
+                            ? `Streaming logs... (${logs.length} events)`
+                            : (isLoading ? 'Searching...' : `Showing ${logs.length} results`)
+                        }
                     </p>
                 </div>
             </div>

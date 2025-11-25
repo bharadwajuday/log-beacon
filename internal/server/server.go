@@ -1,16 +1,19 @@
 package server
 
 import (
+	"context"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	"log-beacon/internal/model"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
 // LogPublisher defines the interface for publishing log entries.
@@ -18,19 +21,26 @@ type LogPublisher interface {
 	Publish(logEntry model.Log) error
 }
 
+// LogSubscriber defines the interface for subscribing to log entries.
+type LogSubscriber interface {
+	Subscribe(ctx context.Context) (<-chan model.Log, error)
+}
+
 // Server holds dependencies for the HTTP server.
 type Server struct {
 	router        *gin.Engine
 	publisher     LogPublisher
+	subscriber    LogSubscriber
 	hotStorageURL string
 }
 
 // New creates a new HTTP server and sets up routing.
-func New(pub LogPublisher, hotStorageURL string) *Server {
+func New(pub LogPublisher, sub LogSubscriber, hotStorageURL string) *Server {
 	router := gin.Default()
 	s := &Server{
 		router:        router,
 		publisher:     pub,
+		subscriber:    sub,
 		hotStorageURL: hotStorageURL,
 	}
 
@@ -39,6 +49,7 @@ func New(pub LogPublisher, hotStorageURL string) *Server {
 	{
 		api.POST("/ingest", s.handleIngest)
 		api.GET("/search", s.handleSearch)
+		api.GET("/tail", s.handleLiveTail)
 	}
 
 	router.GET("/health", func(c *gin.Context) {
@@ -60,6 +71,11 @@ func (s *Server) handleIngest(c *gin.Context) {
 	if err := c.ShouldBindJSON(&logEntry); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+
+	// Ensure timestamp is set
+	if logEntry.Timestamp.IsZero() {
+		logEntry.Timestamp = time.Now().UTC()
 	}
 
 	if err := s.publisher.Publish(logEntry); err != nil {
@@ -123,4 +139,70 @@ func (s *Server) handleSearch(c *gin.Context) {
 	// Proxy the response headers and body.
 	c.Writer.WriteHeader(resp.StatusCode)
 	io.Copy(c.Writer, resp.Body)
+}
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	// Allow all origins for simplicity in this demo/dev environment
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+// handleLiveTail upgrades the HTTP connection to a WebSocket and streams logs.
+func (s *Server) handleLiveTail(c *gin.Context) {
+	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		log.Printf("Failed to upgrade to WebSocket: %v", err)
+		return
+	}
+	defer ws.Close()
+
+	// Create a context that is canceled when the client disconnects
+	// Note: gin.Context.Done() might not be sufficient for websocket disconnects detection in all cases,
+	// but we'll rely on the write failure or read failure to detect disconnect.
+	// Actually, we should listen for close messages.
+	ctx, cancel := context.WithCancel(c.Request.Context())
+	defer cancel()
+
+	// Start a goroutine to read from the websocket to handle control messages (ping/pong/close)
+	// and detect disconnection.
+	go func() {
+		defer cancel()
+		for {
+			if _, _, err := ws.NextReader(); err != nil {
+				break
+			}
+		}
+	}()
+
+	logChan, err := s.subscriber.Subscribe(ctx)
+	if err != nil {
+		log.Printf("Failed to subscribe to logs: %v", err)
+		return
+	}
+
+	// Send a ping every 30 seconds to keep the connection alive
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if err := ws.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+				return
+			}
+		case logEntry, ok := <-logChan:
+			if !ok {
+				return
+			}
+			if err := ws.WriteJSON(logEntry); err != nil {
+				log.Printf("Error writing to WebSocket: %v", err)
+				return
+			}
+		}
+	}
 }

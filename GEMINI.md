@@ -31,4 +31,5 @@ Log Beacon is a log management system inspired by Humio. It uses a hot/cold stor
 - The `frontendv2` service provides a modern, dark-themed UI using Tailwind CSS for searching logs.
 - Logs are automatically timestamped with the current UTC time upon ingestion by the `api` service.
 - Unit tests are integrated into the `make test` command.
+- **Live Tail:** The `api` service exposes a WebSocket endpoint at `/api/v1/tail` for real-time log streaming, which is fully integrated into the `frontendv2` UI.
 - Persistent data volumes for all stateful services are managed via `docker-compose` and created on the host in `/tmp/log-beacon`.
