@@ -23,6 +23,18 @@ This file tracks potential next steps and features to improve the Log Beacon pla
     -   This would likely be a slower, asynchronous process initiated via a separate API endpoint (e.g., `/api/v1/archive/search`).
     -   The process would involve downloading, decompressing, and searching through the gzipped log chunks in the MinIO bucket.
 
+5.  **Implement Authentication & Authorization:**
+    -   **API (Backend):**
+        -   Implement JWT-based authentication.
+        -   Add `POST /api/v1/login` endpoint.
+        -   Secure `/search` and `/tail` endpoints with auth middleware.
+        -   Secure `/ingest` endpoint (API Key or JWT).
+    -   **UI (Frontend):**
+        -   Create a Login page.
+        -   Manage JWT in `localStorage`.
+        -   Redirect unauthenticated users to Login.
+        -   Attach JWT to API requests.
+
 ---
 
 ## UI Improvements

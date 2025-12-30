@@ -70,6 +70,11 @@ const LogList: React.FC<LogListProps> = ({ logs, isLoading, error, hasSearched, 
                         <span className={`px-2 py-1 text-xs font-bold rounded ${getLevelColor(log.level)}`}>
                             {log.level.toUpperCase()}
                         </span>
+                        {log.labels && log.labels.service && (
+                            <span className="px-2 py-1 text-xs font-medium rounded bg-primary/20 text-primary">
+                                {log.labels.service}
+                            </span>
+                        )}
                         <p className="flex-1 text-text-light break-all">
                             {log.message}
                         </p>
