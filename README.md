@@ -83,7 +83,7 @@ The entire development environment is managed via a `Makefile` for simplicity an
     ```
 
 - **Clean Up Data:**
-    To remove the persistent data stored on the host machine in `/Users/bharadwajuday/log-beacon-data`:
+    To remove the persistent data stored on the host machine in `$HOME/log-beacon-data`:
 
     ```bash
     make clean

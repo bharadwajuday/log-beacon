@@ -94,25 +94,25 @@ volumes:
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/Users/bharadwajuday/log-beacon-data/nats-data'
+      device: '$HOME/log-beacon-data/nats-data'
 
   minio-data:
     driver: local
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/Users/bharadwajuday/log-beacon-data/minio-data'
+      device: '$HOME/log-beacon-data/minio-data'
 
   hot-storage-data:
     driver: local
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/Users/bharadwajuday/log-beacon-data/hot-storage-data'
+      device: '$HOME/log-beacon-data/hot-storage-data'
 
   postgres-data:
     driver: local
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/Users/bharadwajuday/log-beacon-data/postgres-data'
+      device: '$HOME/log-beacon-data/postgres-data'

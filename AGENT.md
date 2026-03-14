@@ -22,7 +22,7 @@ The system operates as a multi-service application orchestrated by `docker-compo
 1.  **`api` Service:**
     - Entry point for ingestion (`POST /api/v1/ingest`), search proxying, and WebSocket-based live tailing (`/api/v1/tail`).
 2.  **`nats` Service:**
-    - Durable message buffer using JetStream. Persistent data stored in `/Users/bharadwajuday/log-beacon-data/nats-data`.
+    - Durable message buffer using JetStream. Persistent data stored in `$HOME/log-beacon-data/nats-data`.
 3.  **`hot-storage` Service:**
     - Consumer that indexes recent logs using Bleve and BadgerDB for fast searching. Exposes an internal search API on port 8081.
 4.  **`archiver` Service:**
@@ -50,4 +50,4 @@ The entire development environment is managed via a `Makefile`.
 - **Microservices Decoupling:** Ingestion, indexing, and archival are separate services connected via NATS, allowing independent scaling and decoupling of concerns.
 - **Search Refinement:** Supports structured queries (e.g., `service:auth AND level:error`) with automatic label rewriting (e.g., `service:auth` -> `labels.service:auth`).
 - **Live Tail:** Powered by WebSockets in the `api` service, providing real-time log streaming directly to the `frontendv2` UI.
-- **Persistence:** All stateful data is mapped to `/Users/bharadwajuday/log-beacon-data` on the host machine for persistence across container restarts.
+- **Persistence:** All stateful data is mapped to `$HOME/log-beacon-data` on the host machine for persistence across container restarts.

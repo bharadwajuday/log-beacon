@@ -34,4 +34,4 @@ Log Beacon is a log management system inspired by Humio. It uses a hot/cold stor
 - Unit tests are integrated into the `make test` command.
 - **Live Tail:** The `api` service exposes a WebSocket endpoint at `/api/v1/tail` for real-time log streaming, which is fully integrated into the `frontendv2` UI.
 - **Authentication:** JWT-based authentication is implemented across the stack, protecting search, ingestion, and live tail endpoints.
-- **Persistent Data:** Volumes for all stateful services (NATS, MinIO, Hot Storage, Postgres) are managed via `docker-compose` and persisted at `/Users/bharadwajuday/log-beacon-data`.
+- **Persistent Data:** Volumes for all stateful services (NATS, MinIO, Hot Storage, Postgres) are managed via `docker-compose` and persisted at `$HOME/log-beacon-data`.

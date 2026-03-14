@@ -5,7 +5,7 @@
 
 # Define variables
 COMPOSE_FILE := docker-compose.yml
-HOST_DATA_DIRS := /Users/bharadwajuday/log-beacon-data/nats-data /Users/bharadwajuday/log-beacon-data/minio-data /Users/bharadwajuday/log-beacon-data/hot-storage-data /Users/bharadwajuday/log-beacon-data/postgres-data
+HOST_DATA_DIRS := $HOME/log-beacon-data/nats-data $HOME/log-beacon-data/minio-data $HOME/log-beacon-data/hot-storage-data $HOME/log-beacon-data/postgres-data
 
 # Default target: running 'make' will be the same as 'make up'
 default: up
@@ -40,4 +40,4 @@ test:
 # Target to clean up the host data directories.
 clean:
 	@echo "--> Removing host data directories..."
-	@rm -rf /Users/bharadwajuday/log-beacon-data
+	@rm -rf $$HOME/log-beacon-data
