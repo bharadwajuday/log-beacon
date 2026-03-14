@@ -25,7 +25,7 @@ This file tracks potential next steps and features to improve the Log Beacon pla
 
 5.  **Implement Authentication & Authorization:**
     -   **API (Backend):**
-        -   Implement JWT-based authentication.
+        - [x] **Authentication:** Implement JWT-based authentication and user management.
         -   Add `POST /api/v1/login` endpoint.
         -   Secure `/search` and `/tail` endpoints with auth middleware.
         -   Secure `/ingest` endpoint (API Key or JWT).

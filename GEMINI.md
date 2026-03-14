@@ -20,11 +20,12 @@ Log Beacon is a log management system inspired by Humio. It uses a hot/cold stor
 - **Cold Storage (`archiver` service):** A modular Go consumer that subscribes to NATS and writes all logs to a MinIO bucket for long-term archival.
 - **Hot Storage (`hot-storage` service):** A modular Go consumer that subscribes to NATS and uses Bleve (full-text index) and BadgerDB (key-value store) to provide a fast, searchable index of recent logs. It also exposes an internal search API on port 8081.
 - **Object Storage (`minio` service):** A MinIO server that stores the compressed log data from the `archiver`.
+- **Database (`postgres` service):** A Postgres database for user authentication and system metadata.
 
 ## Current Status
 
 - The project is fully managed via a `Makefile` which automates directory creation, Docker Compose commands, and testing.
-- The environment consists of six services: `nats`, `minio`, `api`, `archiver`, `hot-storage`, and `frontendv2`.
+- The environment consists of seven services: `nats`, `minio`, `api`, `archiver`, `hot-storage`, `postgres`, and `frontendv2`.
 - **Search Refinement:** The `hot-storage` service now supports structured queries with `AND`/`OR` operators and automatic field rewriting (e.g., `service:auth` -> `labels.service:auth`).
 - **Frontend Integration:** The `frontendv2` UI supports implicit log level filtering using the sidebar, which is combined with the main search query.
 - Both the `archiver` and `hot-storage` services are implemented with a modular internal structure.
@@ -32,4 +33,5 @@ Log Beacon is a log management system inspired by Humio. It uses a hot/cold stor
 - Logs are automatically timestamped with the current UTC time upon ingestion by the `api` service.
 - Unit tests are integrated into the `make test` command.
 - **Live Tail:** The `api` service exposes a WebSocket endpoint at `/api/v1/tail` for real-time log streaming, which is fully integrated into the `frontendv2` UI.
-- Persistent data volumes for all stateful services are managed via `docker-compose` and created on the host in `/tmp/log-beacon`.
+- **Authentication:** JWT-based authentication is implemented across the stack, protecting search, ingestion, and live tail endpoints.
+- **Persistent Data:** Volumes for all stateful services (NATS, MinIO, Hot Storage, Postgres) are managed via `docker-compose` and persisted at `/Users/bharadwajuday/log-beacon-data`.

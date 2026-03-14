@@ -33,9 +33,11 @@ services:
       - "8080:8080"
     depends_on:
       - nats
+      - postgres
     environment:
       - NATS_URL=nats://nats:4222
       - HOT_STORAGE_URL=http://hot-storage:8081
+      - DB_URL=postgres://logbeacon:logbeacon@postgres:5432/logbeacon_auth?sslmode=disable
 
   # Archiver Service (Cold Storage)
   archiver:
@@ -63,6 +65,19 @@ services:
     volumes:
       - hot-storage-data:/data
 
+  # Postgres Database for User Authentication
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=logbeacon
+      - POSTGRES_PASSWORD=logbeacon
+      - POSTGRES_DB=logbeacon_auth
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+
 
   frontendv2:
     build: ./frontendv2
@@ -79,18 +94,25 @@ volumes:
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/tmp/log-beacon/nats-data'
+      device: '/Users/bharadwajuday/log-beacon-data/nats-data'
 
   minio-data:
     driver: local
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/tmp/log-beacon/minio-data'
+      device: '/Users/bharadwajuday/log-beacon-data/minio-data'
 
   hot-storage-data:
     driver: local
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/tmp/log-beacon/hot-storage-data'
+      device: '/Users/bharadwajuday/log-beacon-data/hot-storage-data'
+
+  postgres-data:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/Users/bharadwajuday/log-beacon-data/postgres-data'

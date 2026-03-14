@@ -10,10 +10,10 @@ Log Beacon is a high-performance, Humio-inspired log ingestion and search platfo
 - **Search**:
     - Full-text search on log messages.
     - Structured search on fields (e.g., `level:error`, `service:auth`).
-    - Boolean operators: `AND`, `OR` (e.g., `service:auth AND level:error`).
-    - Log level filtering via UI.
-- **Live Tail**: Real-time log streaming via WebSockets, similar to `tail -f`.
-- **Frontend**: Modern React-based UI for searching and viewing logs.
+    - **Search Refinement:** Support for structured queries with `AND`/`OR` operators and automatic field rewriting.
+- **Authentication:** Secure JWT-based authentication with Postgres storage, including registration and login flows.
+- **Live Tail**: Real-time log streaming via WebSockets, integrated into the UI.
+- **Persistent Storage:** Hot storage (Bleve/BadgerDB) and Cold storage (MinIO) with host-mapped volumes for data durability.
 
 ## Architecture
 
@@ -25,6 +25,7 @@ Log Beacon uses a decoupled, microservices-oriented architecture built on a hot/
 - **Hot Storage (`hot-storage`):** A consumer that indexes recent logs in Bleve and BadgerDB for fast, real-time searching.
 - **Cold Storage (`archiver`):** A consumer that archives all logs to a MinIO object store for long-term retention.
 - **Object Storage (`minio`):** A MinIO server for durable, long-term log archival.
+- **Database (`postgres`):** A Postgres database used for storing user credentials and authentication metadata.
 
 ## Getting Started
 
@@ -55,6 +56,7 @@ The entire development environment is managed via a `Makefile` for simplicity an
     - **Web UI:** `http://localhost:3000`
     - **API Server:** `http://localhost:8080`
     - **MinIO Console:** `http://localhost:9001` (user: `minioadmin`, pass: `minioadmin`)
+    - **Postgres:** `localhost:5432` (user: `logbeacon`, pass: `logbeacon`, db: `logbeacon_auth`)
 
 ### Usage
 
@@ -81,7 +83,7 @@ The entire development environment is managed via a `Makefile` for simplicity an
     ```
 
 - **Clean Up Data:**
-    To remove the persistent data stored on the host machine in `/tmp/log-beacon`:
+    To remove the persistent data stored on the host machine in `/Users/bharadwajuday/log-beacon-data`:
 
     ```bash
     make clean

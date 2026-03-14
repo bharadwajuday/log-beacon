@@ -10,7 +10,9 @@ import (
 	"strings"
 	"time"
 
+	"log-beacon/internal/auth"
 	"log-beacon/internal/model"
+	"log-beacon/internal/repository"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -31,25 +33,40 @@ type Server struct {
 	router        *gin.Engine
 	publisher     LogPublisher
 	subscriber    LogSubscriber
+	userRepo      *repository.UserRepository
 	hotStorageURL string
 }
 
 // New creates a new HTTP server and sets up routing.
-func New(pub LogPublisher, sub LogSubscriber, hotStorageURL string) *Server {
+func New(pub LogPublisher, sub LogSubscriber, userRepo *repository.UserRepository, hotStorageURL string) *Server {
 	router := gin.Default()
 	s := &Server{
 		router:        router,
 		publisher:     pub,
 		subscriber:    sub,
+		userRepo:      userRepo,
 		hotStorageURL: hotStorageURL,
 	}
 
 	// --- API Route Group ---
 	api := router.Group("/api/v1")
 	{
-		api.POST("/ingest", s.handleIngest)
-		api.GET("/search", s.handleSearch)
-		api.GET("/tail", s.handleLiveTail)
+		// Public Auth routes
+		authGroup := api.Group("/auth")
+		{
+			authGroup.GET("/status", s.handleAuthStatus)
+			authGroup.POST("/register", s.handleRegister)
+			authGroup.POST("/login", s.handleLogin)
+		}
+
+		// Protected routes
+		protected := api.Group("")
+		protected.Use(s.AuthMiddleware())
+		{
+			protected.POST("/ingest", s.handleIngest)
+			protected.GET("/search", s.handleSearch)
+			protected.GET("/tail", s.handleLiveTail)
+		}
 	}
 
 	router.GET("/health", func(c *gin.Context) {
@@ -57,6 +74,108 @@ func New(pub LogPublisher, sub LogSubscriber, hotStorageURL string) *Server {
 	})
 
 	return s
+}
+
+// AuthRequest defines the structure for registration and login requests.
+type AuthRequest struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
+// handleAuthStatus checks if there are any users in the system.
+func (s *Server) handleAuthStatus(c *gin.Context) {
+	count, err := s.userRepo.CountUsers()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check system status"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"has_users": count > 0})
+}
+
+// handleRegister creates a new user.
+func (s *Server) handleRegister(c *gin.Context) {
+	var req AuthRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	hashedPassword, err := auth.HashPassword(req.Password)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process password"})
+		return
+	}
+
+	if err := s.userRepo.CreateUser(req.Username, hashedPassword); err != nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "Username already exists or database error"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
+}
+
+// handleLogin authenticates a user and returns a JWT.
+func (s *Server) handleLogin(c *gin.Context) {
+	var req AuthRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := s.userRepo.GetUserByUsername(req.Username)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
+
+	if !auth.CheckPasswordHash(req.Password, user.PasswordHash) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
+
+	token, err := auth.GenerateJWT(user.Username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"token": token})
+}
+
+// AuthMiddleware validates the JWT token in the Authorization header.
+func (s *Server) AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		tokenString := ""
+
+		if authHeader != "" {
+			parts := strings.Split(authHeader, " ")
+			if len(parts) == 2 && parts[0] == "Bearer" {
+				tokenString = parts[1]
+			}
+		}
+
+		// Fallback to query parameter for WebSockets or other cases
+		if tokenString == "" {
+			tokenString = c.Query("token")
+		}
+
+		if tokenString == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization required"})
+			c.Abort()
+			return
+		}
+
+		claims, err := auth.ValidateJWT(tokenString)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+			c.Abort()
+			return
+		}
+
+		c.Set("username", claims.Username)
+		c.Next()
+	}
 }
 
 // Start runs the HTTP server on a given address.
@@ -115,11 +234,6 @@ func (s *Server) handleSearch(c *gin.Context) {
 	}
 
 	// Append /search path if not present.
-	// We assume the config is just the host or base URL.
-	// If the config already has /search, we shouldn't duplicate it.
-	// Simple heuristic: if path doesn't end in /search, append it.
-	// But in tests, mock URL is random.
-	// Let's assume s.hotStorageURL is the *service root*.
 	u.Path = path.Join(u.Path, "search")
 
 	q := u.Query()
@@ -152,6 +266,12 @@ var upgrader = websocket.Upgrader{
 
 // handleLiveTail upgrades the HTTP connection to a WebSocket and streams logs.
 func (s *Server) handleLiveTail(c *gin.Context) {
+	// Note: Gorilla WebSocket doesn't easily support middleware headers like Authorization automatically,
+	// but the client can pass the token in a query param or manually via Sec-WebSocket-Protocol.
+	// For simplicity, we'll check the Authorization header which works if the browser/client sends it.
+	// If the client is a browser WebSocket, it might not send custom headers.
+	// However, our middleware already ran and validated the token for this GET request.
+
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Printf("Failed to upgrade to WebSocket: %v", err)
@@ -159,15 +279,9 @@ func (s *Server) handleLiveTail(c *gin.Context) {
 	}
 	defer ws.Close()
 
-	// Create a context that is canceled when the client disconnects
-	// Note: gin.Context.Done() might not be sufficient for websocket disconnects detection in all cases,
-	// but we'll rely on the write failure or read failure to detect disconnect.
-	// Actually, we should listen for close messages.
 	ctx, cancel := context.WithCancel(c.Request.Context())
 	defer cancel()
 
-	// Start a goroutine to read from the websocket to handle control messages (ping/pong/close)
-	// and detect disconnection.
 	go func() {
 		defer cancel()
 		for {
@@ -183,7 +297,6 @@ func (s *Server) handleLiveTail(c *gin.Context) {
 		return
 	}
 
-	// Send a ping every 30 seconds to keep the connection alive
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 

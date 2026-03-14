@@ -6,9 +6,10 @@ interface HeaderProps {
     onSearch: () => void;
     isLiveTail: boolean;
     onToggleLiveTail: () => void;
+    onLogout: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ query, setQuery, onSearch, isLiveTail, onToggleLiveTail }) => {
+const Header: React.FC<HeaderProps> = ({ query, setQuery, onSearch, isLiveTail, onToggleLiveTail, onLogout }) => {
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !isLiveTail) {
             onSearch();
@@ -59,10 +60,12 @@ const Header: React.FC<HeaderProps> = ({ query, setQuery, onSearch, isLiveTail, 
                 <button className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-panel-dark text-text-light gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5">
                     <span className="material-symbols-outlined text-text-light">notifications</span>
                 </button>
-                <button className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-panel-dark text-text-light gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5">
-                    <span className="material-symbols-outlined text-text-light">help</span>
+                <button 
+                  onClick={onLogout}
+                  className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-red-500/10 text-red-500 hover:bg-red-500/20 gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-4 transition-colors">
+                    <span className="material-symbols-outlined">logout</span>
+                    <span className="truncate">Logout</span>
                 </button>
-                <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDnGJDXzef2v6TZrkKLzSPbNGVwz_mdz7ELiq3XOwV6ET9kCXIOWnvcCvAEIaeA-d7f6gvbxDY65Rb-7n83R_NfNN6tYIZeiUe_7XywydrEBbd2yo0R_5zl9mbqRoO00_LRbC9PMMLYyArs87iZJG7qBjjjT-oE-zG1hzIY_u3CVqAWVmZaQu0-Di16i_DJvuOSAX5SHfFDIw76NvWatlso753EhWejFs4zHpEbUBXKeHWqDl4DOBq6vt8lme-P_Evg69I1TBUjeJLb")' }}></div>
             </div>
         </header>
     );

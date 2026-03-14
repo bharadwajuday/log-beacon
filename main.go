@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"log-beacon/internal/queue"
+	"log-beacon/internal/repository"
 	"log-beacon/internal/server"
 )
 
@@ -14,6 +15,19 @@ func main() {
 	if natsURL == "" {
 		log.Fatal("NATS_URL environment variable not set.")
 	}
+
+	// Get DB URL from environment variable.
+	dbURL := os.Getenv("DB_URL")
+	if dbURL == "" {
+		log.Fatal("DB_URL environment variable not set.")
+	}
+
+	// Initialize User repository.
+	userRepo, err := repository.NewUserRepository(dbURL)
+	if err != nil {
+		log.Fatalf("Failed to initialize user repository: %v", err)
+	}
+	defer userRepo.Close()
 
 	// Ensure the NATS stream exists and is configured correctly.
 	queue.EnsureStream(natsURL)
@@ -36,8 +50,8 @@ func main() {
 	if hotStorageURL == "" {
 		log.Fatal("HOT_STORAGE_URL environment variable not set.")
 	}
-	// Create a new server with the publisher and subscriber dependencies.
-	srv := server.New(publisher, subscriber, hotStorageURL)
+	// Create a new server with the publisher, subscriber, and userRepo dependencies.
+	srv := server.New(publisher, subscriber, userRepo, hotStorageURL)
 
 	// Start the server on port 8080.
 	log.Println("Starting API server on port 8080...")

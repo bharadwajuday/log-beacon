@@ -8,7 +8,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        "primary": "#00f5d4", // Vibrant Teal
+        "primary": "#3b82f6", // Brand Blue
+        "primary-blue": "#3b82f6", // Brand Blue
+        "primary-light": "#60a5fa",
         "background-light": "#f6f6f8",
         "background-dark": "#1e1e21", // Dark Charcoal
         "panel-dark": "#2a2a2e", // Slightly lighter Gray
