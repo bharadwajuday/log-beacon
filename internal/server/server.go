@@ -59,11 +59,13 @@ func New(pub LogPublisher, sub LogSubscriber, userRepo *repository.UserRepositor
 			authGroup.POST("/login", s.handleLogin)
 		}
 
+		// Public routes
+		api.POST("/ingest", s.handleIngest)
+
 		// Protected routes
 		protected := api.Group("")
 		protected.Use(s.AuthMiddleware())
 		{
-			protected.POST("/ingest", s.handleIngest)
 			protected.GET("/search", s.handleSearch)
 			protected.GET("/tail", s.handleLiveTail)
 		}

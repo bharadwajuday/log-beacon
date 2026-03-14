@@ -39,5 +39,7 @@ test:
 
 # Target to clean up the host data directories.
 clean:
+	@echo "--> Stopping and removing services with volumes..."
+	@docker compose -f $(COMPOSE_FILE) down -v
 	@echo "--> Removing host data directories..."
-	@rm -rf $$HOME/log-beacon-data
+	@rm -rf $(HOME)/log-beacon-data
