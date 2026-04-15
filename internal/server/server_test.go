@@ -13,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"log-beacon/internal/auth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -43,7 +44,7 @@ func (m *MockSubscriber) Subscribe(ctx context.Context) (<-chan model.Log, error
 
 func setupTestServer(publisher *MockPublisher, subscriber *MockSubscriber, hotStorageURL string) *gin.Engine {
 	gin.SetMode(gin.TestMode)
-	server := New(publisher, subscriber, hotStorageURL)
+	server := New(publisher, subscriber, nil, hotStorageURL)
 	return server.router
 }
 
@@ -108,6 +109,7 @@ func TestHandleSearch(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/v1/search?q=error", nil)
+	req.Header.Set("Authorization", getValidToken())
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -116,6 +118,7 @@ func TestHandleSearch(t *testing.T) {
 	// Test with AND query (spaces)
 	w2 := httptest.NewRecorder()
 	req2, _ := http.NewRequest("GET", "/api/v1/search?q=level:error AND service:auth", nil)
+	req2.Header.Set("Authorization", getValidToken())
 	router.ServeHTTP(w2, req2)
 
 	assert.Equal(t, http.StatusOK, w2.Code)
@@ -138,7 +141,8 @@ func TestHandleLiveTail(t *testing.T) {
 	defer s.Close()
 
 	// Convert http URL to ws URL
-	wsURL := "ws" + strings.TrimPrefix(s.URL, "http") + "/api/v1/tail"
+	token, _ := auth.GenerateJWT("testuser")
+	wsURL := "ws" + strings.TrimPrefix(s.URL, "http") + "/api/v1/tail?token=" + token
 
 	// Connect to the WebSocket
 	ws, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
@@ -157,4 +161,9 @@ func TestHandleLiveTail(t *testing.T) {
 
 	// Clean up
 	close(logChan)
+}
+
+func getValidToken() string {
+	token, _ := auth.GenerateJWT("testuser")
+	return "Bearer " + token
 }
