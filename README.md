@@ -99,9 +99,9 @@ The entire development environment is managed via a `Makefile` for simplicity an
 ## Documentation for Agents
 
 To assist AI coding assistants working on this repository, the following documentation is available:
-- [AGENT.md](file:///Users/bharadwajuday/Study/projects/log-beacon/AGENT.md): General overview, tech stack details, system architecture, design decisions, and status.
-- [AGENTS.md](file:///Users/bharadwajuday/Study/projects/log-beacon/AGENTS.md): Coordination rules, code boundary scopes, and guidelines for multiple agents collaborating on the codebase concurrently.
-- [IMPROVEMENTS.md](file:///Users/bharadwajuday/Study/projects/log-beacon/IMPROVEMENTS.md): Future technical roadmap, architectural innovations, and product ideas.
-- [TODO.md](file:///Users/bharadwajuday/Study/projects/log-beacon/TODO.md): Immediate task backlog and implementation checklist.
-- [k8s/README.md](file:///Users/bharadwajuday/Study/projects/log-beacon/k8s/README.md): Kubernetes deployment specs and cluster quickstart guide.
+- [AGENT.md](AGENT.md): General overview, tech stack details, system architecture, design decisions, and status.
+- [AGENTS.md](AGENTS.md): Coordination rules, code boundary scopes, and guidelines for multiple agents collaborating on the codebase concurrently.
+- [IMPROVEMENTS.md](IMPROVEMENTS.md): Future technical roadmap, architectural innovations, and product ideas.
+- [TODO.md](TODO.md): Immediate task backlog and implementation checklist.
+- [k8s/README.md](k8s/README.md): Kubernetes deployment specs and cluster quickstart guide.
 

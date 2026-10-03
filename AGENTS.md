@@ -18,7 +18,7 @@ If you are modifying endpoints or communication schemas between services:
 3. **Frontend-Backend Sync:** When updating API routes or request/response formats in the backend `api` server, document the changes clearly or coordinate with the agent working on `frontendv2` to update the React client synchronously.
 
 ## 3. Database & Shared State Modifications
-* **Postgres Database Schema:** Initial SQL is managed via [init.sql](file:///Users/bharadwajuday/Study/projects/log-beacon/db/init.sql). Any changes to tables or authentication schema must be done carefully to avoid breaking user registration/login for others.
+* **Postgres Database Schema:** Initial SQL is managed via [init.sql](db/init.sql). Any changes to tables or authentication schema must be done carefully to avoid breaking user registration/login for others.
 * **NATS Events (`log.events`):** The message publisher and subscribers must agree on the serialization format. Avoid breaking changes to the serialization of `model.Log` on NATS.
 
 ## 4. Concurrent Testing and Port Management

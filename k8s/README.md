@@ -20,16 +20,16 @@ This directory contains production-ready Kubernetes specifications to deploy Log
 
 ## File Overview
 
-* [`00-namespace.yaml`](file:///Users/bharadwajuday/Study/projects/log-beacon/k8s/00-namespace.yaml): Creates the isolated `log-beacon` namespace.
-* [`01-configmaps-secrets.yaml`](file:///Users/bharadwajuday/Study/projects/log-beacon/k8s/01-configmaps-secrets.yaml): Environment configuration and credentials (DB URL, MinIO credentials, batch parameters).
-* [`10-postgres.yaml`](file:///Users/bharadwajuday/Study/projects/log-beacon/k8s/10-postgres.yaml): Postgres StatefulSet, headless service, PVC, and `init.sql` ConfigMap.
-* [`20-nats.yaml`](file:///Users/bharadwajuday/Study/projects/log-beacon/k8s/20-nats.yaml): NATS JetStream StatefulSet with persistent JetStream buffer.
-* [`30-minio.yaml`](file:///Users/bharadwajuday/Study/projects/log-beacon/k8s/30-minio.yaml): MinIO object storage StatefulSet, Service, and PVC.
-* [`40-hot-storage.yaml`](file:///Users/bharadwajuday/Study/projects/log-beacon/k8s/40-hot-storage.yaml): Hot Storage StatefulSet, Service, and PVC with background retention pruner.
-* [`50-archiver.yaml`](file:///Users/bharadwajuday/Study/projects/log-beacon/k8s/50-archiver.yaml): Archiver queue worker with Parquet batching.
-* [`60-api.yaml`](file:///Users/bharadwajuday/Study/projects/log-beacon/k8s/60-api.yaml): API Gateway Deployment and Service with federated search routing.
-* [`70-frontend.yaml`](file:///Users/bharadwajuday/Study/projects/log-beacon/k8s/70-frontend.yaml): React frontend Deployment and Service.
-* [`kustomization.yaml`](file:///Users/bharadwajuday/Study/projects/log-beacon/k8s/kustomization.yaml): Kustomize file bundling all resources.
+* [`00-namespace.yaml`](00-namespace.yaml): Creates the isolated `log-beacon` namespace.
+* [`01-configmaps-secrets.yaml`](01-configmaps-secrets.yaml): Environment configuration and credentials (DB URL, MinIO credentials, batch parameters).
+* [`10-postgres.yaml`](10-postgres.yaml): Postgres StatefulSet, headless service, PVC, and `init.sql` ConfigMap.
+* [`20-nats.yaml`](20-nats.yaml): NATS JetStream StatefulSet with persistent JetStream buffer.
+* [`30-minio.yaml`](30-minio.yaml): MinIO object storage StatefulSet, Service, and PVC.
+* [`40-hot-storage.yaml`](40-hot-storage.yaml): Hot Storage StatefulSet, Service, and PVC with background retention pruner.
+* [`50-archiver.yaml`](50-archiver.yaml): Archiver queue worker with Parquet batching.
+* [`60-api.yaml`](60-api.yaml): API Gateway Deployment and Service with federated search routing.
+* [`70-frontend.yaml`](70-frontend.yaml): React frontend Deployment and Service.
+* [`kustomization.yaml`](kustomization.yaml): Kustomize file bundling all resources.
 
 ---
 
