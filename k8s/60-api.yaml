@@ -1,0 +1,93 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: log-beacon
+  labels:
+    app.kubernetes.io/name: api
+    app.kubernetes.io/part-of: log-beacon
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/name: api
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: log-beacon
+  labels:
+    app.kubernetes.io/name: api
+    app.kubernetes.io/part-of: log-beacon
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: api
+        app.kubernetes.io/part-of: log-beacon
+    spec:
+      containers:
+        - name: api
+          image: log-beacon:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/api"]
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: NATS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: log-beacon-config
+                  key: NATS_URL
+            - name: HOT_STORAGE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: log-beacon-config
+                  key: HOT_STORAGE_URL
+            - name: DB_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: log-beacon-config
+                  key: DB_URL
+            - name: MINIO_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: log-beacon-config
+                  key: MINIO_ENDPOINT
+            - name: MINIO_ACCESS_KEY_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: log-beacon-config
+                  key: MINIO_ACCESS_KEY_ID
+            - name: MINIO_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: log-beacon-secrets
+                  key: MINIO_SECRET_ACCESS_KEY
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi

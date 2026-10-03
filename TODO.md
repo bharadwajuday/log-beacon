@@ -2,38 +2,30 @@
 
 This file tracks potential next steps and features to improve the Log Beacon platform.
 
-1.- [x] **Refine the Search Query**:
-  - Currently, the search is a simple query string.
-  - We need to support structured queries like `level:error AND service:api-gateway`.
-  - This will require parsing the query string in the backend and constructing a more complex Bleve query.
-  - **Status**: Completed. Implemented `AND` operator, automatic label rewriting, and frontend integration.ies in the `hot-storage` service.
+1. - [x] **Refine the Search Query**:
+   - Supported structured queries like `level:error AND service:api-gateway`.
+   - **Status**: Completed. Implemented `AND` operator, automatic label rewriting, and frontend integration.
 
-2.  **Implement Log Retention in Hot Storage:**
-    -   Add a mechanism to the `hot-storage` service to periodically purge old data from Bleve and BadgerDB.
-    -   This will keep the hot storage index lean, fast, and prevent it from growing indefinitely.
-    -   A time-based retention policy (e.g., keep last 24 hours) is a good starting point.
+2. - [x] **Implement Log Retention & Compaction in Hot Storage**:
+   - Added periodic background retention worker to `hot-storage` (`PurgeExpiredLogs`) scanning BadgerDB and purging expired documents from both Bleve index and Badger storage.
+   - Configurable retention periods via `HOT_STORAGE_RETENTION` (e.g. 12h, 24h) and purge frequencies via `HOT_STORAGE_PURGE_INTERVAL`.
+   - **Status**: Completed.
 
-3.  **Build a "Live Tail" Feature:**
-    -   [x] Add a WebSocket endpoint to the `api` service.
-    -   [x] This endpoint would subscribe to the NATS stream and stream logs to a connected client in real-time, providing a `tail -f` like experience.
-    -   **Status**: Completed. Implemented WebSocket endpoint at `/api/v1/tail`.
+3. - [x] **Build a "Live Tail" Feature**:
+   - Added a WebSocket endpoint to the `api` service (`/api/v1/tail`) subscribing to the NATS JetStream log stream.
+   - Integrated live tail toggle directly into the React UI with real-time streaming.
+   - **Status**: Completed.
 
-4.  **Explore the Cold Storage:**
-    -   Build a mechanism to search the "cold" data stored in MinIO.
-    -   This would likely be a slower, asynchronous process initiated via a separate API endpoint (e.g., `/api/v1/archive/search`).
-    -   The process would involve downloading, decompressing, and searching through the gzipped log chunks in the MinIO bucket.
+4. - [x] **Cold Storage Querying & Columnar Analytics**:
+   - Replaced single-log `.gz` writes with in-memory dual-trigger batching and Apache Parquet columnar serialization.
+   - Built cold query engine (`internal/coldquery`) scanning partitioned Parquet files in MinIO with projection and predicate filtering.
+   - Wired federated search routing directly into `/api/v1/search` supporting seamless queries across hot and cold archives.
+   - **Status**: Completed.
 
-5.  **Implement Authentication & Authorization:**
-    -   **API (Backend):**
-        - [x] **Authentication:** Implement JWT-based authentication and user management.
-        -   Add `POST /api/v1/login` endpoint.
-        -   Secure `/search` and `/tail` endpoints with auth middleware.
-        -   Secure `/ingest` endpoint (API Key or JWT).
-    -   **UI (Frontend):**
-        -   Create a Login page.
-        -   Manage JWT in `localStorage`.
-        -   Redirect unauthenticated users to Login.
-        -   Attach JWT to API requests.
+5. - [x] **Implement Authentication & Authorization**:
+   - **Backend**: Implemented JWT authentication, password hashing with bcrypt, Postgres user repository, and auth middleware on `/search` and `/tail`.
+   - **Frontend**: Added login & registration UI modal, token persistence in `localStorage`, and authenticated HTTP/WebSocket clients.
+   - **Status**: Completed. Future work: API Key authentication for the `/api/v1/ingest` endpoint.
 
 ---
 

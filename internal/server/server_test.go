@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"log-beacon/internal/auth"
+	"log-beacon/internal/coldquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -125,6 +126,45 @@ func TestHandleSearch(t *testing.T) {
 	// The mock server returns the query param as is.
 	// Since we are now encoding it properly, the mock server (which uses r.URL.Query().Get("q")) should decode it back to the original string.
 	assert.Contains(t, w2.Body.String(), `"query":"level:error AND service:auth"`)
+}
+
+type MockColdLogSearcher struct {
+	mock.Mock
+}
+
+func (m *MockColdLogSearcher) Search(ctx context.Context, params coldquery.QueryParams) ([]model.Log, error) {
+	args := m.Called(ctx, params)
+	return args.Get(0).([]model.Log), args.Error(1)
+}
+
+func TestHandleSearch_ColdFederated(t *testing.T) {
+	mockPublisher := new(MockPublisher)
+	mockSubscriber := new(MockSubscriber)
+	server := New(mockPublisher, mockSubscriber, nil, "http://hot-storage:8081")
+
+	mockCold := new(MockColdLogSearcher)
+	server.SetColdSearcher(mockCold)
+
+	expectedLogs := []model.Log{
+		{
+			Level:   "ERROR",
+			Message: "Historical archived error",
+		},
+	}
+
+	mockCold.On("Search", mock.Anything, mock.MatchedBy(func(p coldquery.QueryParams) bool {
+		return p.Query == "level:error"
+	})).Return(expectedLogs, nil)
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/search?q=level:error&source=cold", nil)
+	req.Header.Set("Authorization", getValidToken())
+	server.router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "Historical archived error")
+	mockCold.AssertExpectations(t)
 }
 
 func TestHandleLiveTail(t *testing.T) {

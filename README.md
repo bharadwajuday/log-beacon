@@ -5,12 +5,13 @@ Log Beacon is a high-performance, Humio-inspired log ingestion and search platfo
 ## Features
 
 - **Log Ingestion**: HTTP API for ingesting logs.
-- **Hot Storage**: Fast, indexed search using Bleve and BadgerDB.
-- **Cold Storage**: Long-term archival to MinIO.
+- **Hot Storage**: Fast, indexed search using Bleve and BadgerDB with automated background retention pruning (e.g., 12h/24h rolling windows).
+- **Cold Storage**: High-performance, columnar batch archival to MinIO using Apache Parquet (`year=YYYY/month=MM/day=DD/hour=HH/*.parquet`) with time and size buffer triggers.
 - **Search**:
     - Full-text search on log messages.
     - Structured search on fields (e.g., `level:error`, `service:auth`).
     - **Search Refinement:** Support for structured queries with `AND`/`OR` operators and automatic field rewriting.
+    - **Federated Search:** Single unified `/api/v1/search` endpoint intelligently routing between low-latency hot storage and columnar Parquet cold archives.
 - **Authentication:** Secure JWT-based authentication with Postgres storage, including registration and login flows.
 - **Live Tail**: Real-time log streaming via WebSockets, integrated into the UI.
 - **Persistent Storage:** Hot storage (Bleve/BadgerDB) and Cold storage (MinIO) with host-mapped volumes for data durability.
@@ -94,3 +95,13 @@ The entire development environment is managed via a `Makefile` for simplicity an
     ```bash
     make test
     ```
+
+## Documentation for Agents
+
+To assist AI coding assistants working on this repository, the following documentation is available:
+- [AGENT.md](file:///Users/bharadwajuday/Study/projects/log-beacon/AGENT.md): General overview, tech stack details, system architecture, design decisions, and status.
+- [AGENTS.md](file:///Users/bharadwajuday/Study/projects/log-beacon/AGENTS.md): Coordination rules, code boundary scopes, and guidelines for multiple agents collaborating on the codebase concurrently.
+- [IMPROVEMENTS.md](file:///Users/bharadwajuday/Study/projects/log-beacon/IMPROVEMENTS.md): Future technical roadmap, architectural innovations, and product ideas.
+- [TODO.md](file:///Users/bharadwajuday/Study/projects/log-beacon/TODO.md): Immediate task backlog and implementation checklist.
+- [k8s/README.md](file:///Users/bharadwajuday/Study/projects/log-beacon/k8s/README.md): Kubernetes deployment specs and cluster quickstart guide.
+

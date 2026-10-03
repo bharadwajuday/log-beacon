@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: archiver
+  namespace: log-beacon
+  labels:
+    app.kubernetes.io/name: archiver
+    app.kubernetes.io/part-of: log-beacon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: archiver
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: archiver
+        app.kubernetes.io/part-of: log-beacon
+    spec:
+      containers:
+        - name: archiver
+          image: log-beacon:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/archiver"]
+          env:
+            - name: NATS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: log-beacon-config
+                  key: NATS_URL
+            - name: MINIO_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: log-beacon-config
+                  key: MINIO_ENDPOINT
+            - name: MINIO_ACCESS_KEY_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: log-beacon-config
+                  key: MINIO_ACCESS_KEY_ID
+            - name: MINIO_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: log-beacon-secrets
+                  key: MINIO_SECRET_ACCESS_KEY
+            - name: ARCHIVE_BATCH_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: log-beacon-config
+                  key: ARCHIVE_BATCH_SIZE
+            - name: ARCHIVE_FLUSH_INTERVAL
+              valueFrom:
+                configMapKeyRef:
+                  name: log-beacon-config
+                  key: ARCHIVE_FLUSH_INTERVAL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

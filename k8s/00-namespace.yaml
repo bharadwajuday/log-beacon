@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: log-beacon
+  labels:
+    app.kubernetes.io/name: log-beacon
+    app.kubernetes.io/part-of: log-beacon

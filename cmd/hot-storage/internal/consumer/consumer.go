@@ -7,7 +7,6 @@ import (
 	"log-beacon/internal/model"
 	"log-beacon/cmd/hot-storage/internal/search"
 
-	"github.com/dgraph-io/badger/v4"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 )
@@ -62,18 +61,9 @@ func (c *Consumer) handleMessage(msg *nats.Msg) {
 
 	logID := uuid.New().String()
 
-	err := c.searcher.DB.Update(func(txn *badger.Txn) error {
-		return txn.Set([]byte(logID), msg.Data)
-	})
-	if err != nil {
-		log.Printf("Error writing to BadgerDB: %v", err)
+	if err := c.searcher.IndexLog(logID, msg.Data, logEntry); err != nil {
+		log.Printf("Error indexing log %s: %v", logID, err)
 		msg.Nak()
-		return
-	}
-
-	if err := c.searcher.Index.Index(logID, logEntry); err != nil {
-		log.Printf("Error indexing in Bleve: %v", err)
-		msg.Ack()
 		return
 	}
 

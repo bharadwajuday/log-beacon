@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"log-beacon/cmd/hot-storage/internal/consumer"
 	"log-beacon/cmd/hot-storage/internal/search"
@@ -17,8 +18,24 @@ const (
 )
 
 func main() {
+	// Retention period configuration (default: 24h)
+	retentionPeriod := 24 * time.Hour
+	if retStr := os.Getenv("HOT_STORAGE_RETENTION"); retStr != "" {
+		if dur, err := time.ParseDuration(retStr); err == nil && dur > 0 {
+			retentionPeriod = dur
+		}
+	}
+
+	// Purge interval configuration (default: 30m)
+	purgeInterval := 30 * time.Minute
+	if purgeStr := os.Getenv("HOT_STORAGE_PURGE_INTERVAL"); purgeStr != "" {
+		if dur, err := time.ParseDuration(purgeStr); err == nil && dur > 0 {
+			purgeInterval = dur
+		}
+	}
+
 	// --- Initialization ---
-	searcher, err := search.NewSearcher(blevePath, badgerPath)
+	searcher, err := search.NewSearcherWithRetention(blevePath, badgerPath, retentionPeriod, purgeInterval)
 	if err != nil {
 		log.Fatalf("Failed to create searcher: %v", err)
 	}
@@ -43,7 +60,7 @@ func main() {
 		log.Fatalf("Failed to start NATS consumer: %v", err)
 	}
 
-	log.Println("Hot-storage service is running.")
+	log.Printf("Hot-storage service is running with retention %v (purge interval %v).", retentionPeriod, purgeInterval)
 
 	// --- Graceful Shutdown ---
 	signalChan := make(chan os.Signal, 1)

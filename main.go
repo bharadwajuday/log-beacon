@@ -4,9 +4,11 @@ import (
 	"log"
 	"os"
 
+	"log-beacon/internal/coldquery"
 	"log-beacon/internal/queue"
 	"log-beacon/internal/repository"
 	"log-beacon/internal/server"
+	"log-beacon/internal/storage"
 )
 
 func main() {
@@ -52,6 +54,20 @@ func main() {
 	}
 	// Create a new server with the publisher, subscriber, and userRepo dependencies.
 	srv := server.New(publisher, subscriber, userRepo, hotStorageURL)
+
+	// Optionally wire cold storage searcher if MinIO credentials are provided
+	minioEndpoint := os.Getenv("MINIO_ENDPOINT")
+	if minioEndpoint != "" {
+		minioAccessKey := os.Getenv("MINIO_ACCESS_KEY_ID")
+		minioSecretKey := os.Getenv("MINIO_SECRET_ACCESS_KEY")
+		minioStorage, err := storage.NewMinioStorage(minioEndpoint, minioAccessKey, minioSecretKey, false)
+		if err != nil {
+			log.Printf("Warning: failed to initialize MinIO storage for cold search: %v", err)
+		} else {
+			srv.SetColdSearcher(coldquery.NewColdSearcher(minioStorage, "logs"))
+			log.Println("Cold storage query engine enabled for historical queries.")
+		}
+	}
 
 	// Start the server on port 8080.
 	log.Println("Starting API server on port 8080...")

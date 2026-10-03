@@ -7,10 +7,12 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
 	"log-beacon/internal/auth"
+	"log-beacon/internal/coldquery"
 	"log-beacon/internal/model"
 	"log-beacon/internal/repository"
 
@@ -28,6 +30,11 @@ type LogSubscriber interface {
 	Subscribe(ctx context.Context) (<-chan model.Log, error)
 }
 
+// ColdLogSearcher defines the interface for searching cold historical logs.
+type ColdLogSearcher interface {
+	Search(ctx context.Context, params coldquery.QueryParams) ([]model.Log, error)
+}
+
 // Server holds dependencies for the HTTP server.
 type Server struct {
 	router        *gin.Engine
@@ -35,6 +42,7 @@ type Server struct {
 	subscriber    LogSubscriber
 	userRepo      *repository.UserRepository
 	hotStorageURL string
+	coldSearcher  ColdLogSearcher
 }
 
 // New creates a new HTTP server and sets up routing.
@@ -76,6 +84,11 @@ func New(pub LogPublisher, sub LogSubscriber, userRepo *repository.UserRepositor
 	})
 
 	return s
+}
+
+// SetColdSearcher sets the cold log searcher for federated historical queries.
+func (s *Server) SetColdSearcher(cs ColdLogSearcher) {
+	s.coldSearcher = cs
 }
 
 // AuthRequest defines the structure for registration and login requests.
@@ -208,7 +221,7 @@ func (s *Server) handleIngest(c *gin.Context) {
 	c.JSON(http.StatusAccepted, gin.H{"status": "accepted"})
 }
 
-// handleSearch proxies search requests to the hot-storage service.
+// handleSearch proxies search requests to hot storage or executes federated cold queries.
 func (s *Server) handleSearch(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
@@ -216,14 +229,54 @@ func (s *Server) handleSearch(c *gin.Context) {
 		return
 	}
 
-	// Build the request to the hot-storage service, including pagination params.
-	// We use s.hotStorageURL which is injected (env var in main, mock URL in tests).
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "50"))
+	if page < 1 {
+		page = 1
+	}
+	if size < 1 || size > 100 {
+		size = 50
+	}
+
+	// Check time bounds for federated routing
+	var startTime, endTime *time.Time
+	if startStr := c.Query("start"); startStr != "" {
+		if t, err := time.Parse(time.RFC3339, startStr); err == nil {
+			startTime = &t
+		}
+	}
+	if endStr := c.Query("end"); endStr != "" {
+		if t, err := time.Parse(time.RFC3339, endStr); err == nil {
+			endTime = &t
+		}
+	}
+
+	// If a cold searcher is configured and the query specifically asks for cold tier or historical window older than 24h
+	source := strings.ToLower(c.Query("source"))
+	isHistorical := source == "cold" || (endTime != nil && time.Since(*endTime) > 24*time.Hour)
+
+	if isHistorical && s.coldSearcher != nil {
+		logs, err := s.coldSearcher.Search(c.Request.Context(), coldquery.QueryParams{
+			Query:     query,
+			StartTime: startTime,
+			EndTime:   endTime,
+			Page:      page,
+			Size:      size,
+		})
+		if err != nil {
+			log.Printf("Error searching cold storage: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to search cold archives"})
+			return
+		}
+		c.JSON(http.StatusOK, logs)
+		return
+	}
+
+	// Default hot path: proxy to hot-storage service
 	baseURLStr := s.hotStorageURL
 	if baseURLStr == "" {
-		// Fallback if not set (should be set in main)
 		baseURLStr = "http://hot-storage:8081"
 	}
-	// Ensure scheme
 	if !strings.HasPrefix(baseURLStr, "http://") && !strings.HasPrefix(baseURLStr, "https://") {
 		baseURLStr = "http://" + baseURLStr
 	}
@@ -235,13 +288,12 @@ func (s *Server) handleSearch(c *gin.Context) {
 		return
 	}
 
-	// Append /search path if not present.
 	u.Path = path.Join(u.Path, "search")
 
 	q := u.Query()
 	q.Set("q", c.Query("q"))
-	q.Set("page", c.DefaultQuery("page", "1"))
-	q.Set("size", c.DefaultQuery("size", "50"))
+	q.Set("page", strconv.Itoa(page))
+	q.Set("size", strconv.Itoa(size))
 	u.RawQuery = q.Encode()
 
 	resp, err := http.Get(u.String())
@@ -252,7 +304,6 @@ func (s *Server) handleSearch(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	// Proxy the response headers and body.
 	c.Writer.WriteHeader(resp.StatusCode)
 	io.Copy(c.Writer, resp.Body)
 }

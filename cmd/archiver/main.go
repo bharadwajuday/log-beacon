@@ -4,8 +4,11 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
+	"time"
 
+	"log-beacon/cmd/archiver/internal/batcher"
 	"log-beacon/cmd/archiver/internal/consumer"
 	"log-beacon/cmd/archiver/internal/writer"
 )
@@ -16,28 +19,48 @@ func main() {
 	minioAccessKey := os.Getenv("MINIO_ACCESS_KEY_ID")
 	minioSecretKey := os.Getenv("MINIO_SECRET_ACCESS_KEY")
 
-	minioWriter, err := writer.NewMinioWriter(minioEndpoint, minioAccessKey, minioSecretKey)
+	parquetWriter, err := writer.NewParquetMinioWriter(minioEndpoint, minioAccessKey, minioSecretKey)
 	if err != nil {
-		log.Fatalf("Failed to create MinIO writer: %v", err)
+		log.Fatalf("Failed to create Parquet MinIO writer: %v", err)
 	}
+
+	// Batch configuration
+	batchSize := 5000
+	if bsStr := os.Getenv("ARCHIVE_BATCH_SIZE"); bsStr != "" {
+		if val, err := strconv.Atoi(bsStr); err == nil && val > 0 {
+			batchSize = val
+		}
+	}
+
+	flushInterval := 30 * time.Second
+	if fiStr := os.Getenv("ARCHIVE_FLUSH_INTERVAL"); fiStr != "" {
+		if val, err := time.ParseDuration(fiStr); err == nil && val > 0 {
+			flushInterval = val
+		}
+	}
+
+	b := batcher.NewBatcher(parquetWriter, batcher.Config{
+		BatchSize:     batchSize,
+		FlushInterval: flushInterval,
+	})
 
 	natsURL := os.Getenv("NATS_URL")
 	if natsURL == "" {
 		log.Fatal("NATS_URL environment variable not set.")
 	}
 
-	consumer, err := consumer.NewConsumer(natsURL, minioWriter)
+	c, err := consumer.NewConsumer(natsURL, b)
 	if err != nil {
 		log.Fatalf("Failed to create NATS consumer: %v", err)
 	}
-	defer consumer.Close()
+	defer c.Close()
 
 	// --- Start Services ---
-	if err := consumer.Start(); err != nil {
+	if err := c.Start(); err != nil {
 		log.Fatalf("Failed to start NATS consumer: %v", err)
 	}
 
-	log.Println("Archiver service is running.")
+	log.Printf("Archiver service is running with batch size %d and flush interval %v.", batchSize, flushInterval)
 
 	// --- Graceful Shutdown ---
 	signalChan := make(chan os.Signal, 1)
@@ -45,6 +68,6 @@ func main() {
 	<-signalChan
 
 	log.Println("Shutting down archiver service...")
-	// Consumer is closed by its deferred call
+	// Consumer.Close() flushes pending items in Batcher
 	log.Println("Archiver service shut down gracefully.")
 }

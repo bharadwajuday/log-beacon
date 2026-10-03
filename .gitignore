@@ -27,3 +27,8 @@ vendor/
 
 # macOS specific files
 .DS_Store
+
+# Local design drafts and research notes
+*.draft.md
+design_drafts/
+

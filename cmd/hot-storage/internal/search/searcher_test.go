@@ -1,7 +1,11 @@
 package search
 
 import (
+	"encoding/json"
 	"testing"
+	"time"
+
+	"log-beacon/internal/model"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/search/query"
@@ -77,4 +81,52 @@ func TestQueryStringQueryParentheses(t *testing.T) {
 	res, err := index.Search(req)
 	require.NoError(t, err)
 	assert.Equal(t, 2, int(res.Total))
+}
+
+func TestPurgeExpiredLogs(t *testing.T) {
+	blevePath := t.TempDir() + "/purge_test.bleve"
+	badgerPath := t.TempDir() + "/purge_test.badger"
+
+	// Retention of 1 hour, no auto-ticker in test
+	s, err := NewSearcherWithRetention(blevePath, badgerPath, 1*time.Hour, 0)
+	require.NoError(t, err)
+	defer s.Close()
+
+	now := time.Now().UTC()
+
+	// 1 old log (2 hours ago, should be purged)
+	oldLog := model.Log{
+		Timestamp: now.Add(-2 * time.Hour),
+		Level:     "ERROR",
+		Message:   "Old expired error",
+	}
+	oldBytes, _ := json.Marshal(oldLog)
+	err = s.IndexLog("old-id-1", oldBytes, oldLog)
+	require.NoError(t, err)
+
+	// 1 fresh log (10 minutes ago, should be kept)
+	freshLog := model.Log{
+		Timestamp: now.Add(-10 * time.Minute),
+		Level:     "INFO",
+		Message:   "Fresh active info",
+	}
+	freshBytes, _ := json.Marshal(freshLog)
+	err = s.IndexLog("fresh-id-2", freshBytes, freshLog)
+	require.NoError(t, err)
+
+	// Run manual purge
+	err = s.PurgeExpiredLogs()
+	assert.NoError(t, err)
+
+	// Search for error (should be 0 hits)
+	qOld := bleve.NewTermQuery("error")
+	resOld, err := s.Index.Search(bleve.NewSearchRequest(qOld))
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(0), resOld.Total)
+
+	// Search for info (should be 1 hit)
+	qFresh := bleve.NewTermQuery("info")
+	resFresh, err := s.Index.Search(bleve.NewSearchRequest(qFresh))
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(1), resFresh.Total)
 }
